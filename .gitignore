@@ -2,3 +2,4 @@ src/hreflex_txbdc.egg-info/
 .vscode/
 src/hreflex_txbdc/view/__pycache__/
 *.pyc
+myenv/
