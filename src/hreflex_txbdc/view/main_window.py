@@ -155,12 +155,19 @@ class MainWindow(QMainWindow):
         #self._msg_text.setFixedWidth(150)
         self._msg_text.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
         top_layout.addWidget(self._msg_text)
+        self._msg_text.returnPressed.connect(self._on_send_button_clicked)
         
         # Add send button
         send_button = QPushButton("Send")
         send_button.setFont(self._regular_font)
         send_button.clicked.connect(self._on_send_button_clicked)
         top_layout.addWidget(send_button)
+
+        # self._command_entry = QLineEdit("")
+        # self._command_entry.setFont(self._regular_font)
+        # self._command_entry.setPlaceholderText("Enter a command...")
+        # self._command_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
+        # self._command_entry.returnPressed.connect(self._on_user_command_entered)
         
         # Add the horizontal layout to the main layout
         self._layout.addLayout(top_layout, 0, 0)
