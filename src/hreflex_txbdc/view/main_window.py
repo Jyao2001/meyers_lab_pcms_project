@@ -46,6 +46,9 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
+        # List to store message text entries
+        self._msg_text_list = []  
+        
         # Initialize a variable to hold EMG signal data for plotting
         self._emg_signal_data = np.zeros(5000)
         self._emg_signal_data_max_length = 5000
@@ -82,9 +85,14 @@ class MainWindow(QMainWindow):
 
         # Main layout container
         self._layout: QGridLayout = QGridLayout()
-        self._layout.setRowStretch(0, 0)
-        self._layout.setRowStretch(1, 1)
-        self._layout.setRowStretch(2, 1)
+        # self._layout.setRowStretch(0, 0)
+        # self._layout.setRowStretch(1, 1)
+        # self._layout.setRowStretch(2, 1)
+        # self._layout.setRowStretch(3, 0)
+        # Format: setRowStretch(row_number, stretch_factor)
+        self._layout.setRowStretch(0, 5)    # Top section - increased
+        self._layout.setRowStretch(1, 2)    # Middle section - increased
+        self._layout.setRowStretch(2, 2)    # Bottom section - decreased
         self._layout.setRowStretch(3, 0)
 
         # Initialize layout sections
@@ -115,90 +123,76 @@ class MainWindow(QMainWindow):
         #self.threadpool.start(self.background_worker)
 
     #endregion
-    
-    def _on_send_button_clicked(self) -> None:
-        """
-        Handler for send button clicks.
-        """
-        # Get text from subject entry
-        message = self._msg_text.text()
-        
-        if message.strip():  # Only send if there's actual text
-            # Add to session messages
-            message = SessionMessage(f"Message to stim jim: {message}")
-            self._session_messages.append(message)
-            self._update_session_messages()
-            
-            # Optionally clear the text box after sending
-            self._msg_text.clear()
             
     #region Methods for creating the user interface
     def _create_top_section(self) -> None:
         """
-        Creates the top section of the window, which contains UI elements
-        for selecting the subject and the stage. There are also labels to
-        display the booth number and information about the selected stage.
+        Creates the top section of the window with subject entry and message to Stim Jim
         """
-
-        #Create the grid
-        grid = QGridLayout()
-        #grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
-        grid.setColumnStretch(0, 1)
-        grid.setColumnStretch(1, 1)
-
-        #Create a sub-grid on the left side for the subject and stage
-        left_grid = QGridLayout()
-        grid.addLayout(left_grid, 0, 0)
-
-        #Subject label
-        subject_label = QLabel("Subject: ")
-        subject_label.setFont(self._bold_font) 
-        left_grid.addWidget(subject_label, 0, 0)
+        # Create main top layout as a grid with 2 rows
+        top_grid = QGridLayout()
+        top_grid.setRowStretch(0, 1)
+        top_grid.setRowStretch(1, 1)
         
-        #Subject text entry
+        # First row - Subject entry
+        subject_layout = QHBoxLayout()
+        
+        # Subject label
+        subject_label = QLabel("Subject: ")
+        subject_label.setFont(self._bold_font)
+        subject_layout.addWidget(subject_label)
+        
+        # Subject text entry
         self._subject_entry = QLineEdit("")
         self._subject_entry.setFont(self._regular_font)
-        self._subject_entry.setFixedWidth(150)
+        #self._subject_entry.setFixedWidth(150)
         self._subject_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
-
         self._subject_entry.editingFinished.connect(self._on_subject_name_edited)
-        left_grid.addWidget(self._subject_entry, 0, 1)
-
-        # Create the main horizontal layout for top section
-        top_layout = QHBoxLayout()
-        top_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)  # Left align the layout
+        subject_layout.addWidget(self._subject_entry)
         
-        # Stim jim label
-        stim_label = QLabel("Message to Stim Jim: ")
-        stim_label.setFont(self._bold_font) 
-        top_layout.addWidget(stim_label)
+        # Add subject row to grid
+        top_grid.addLayout(subject_layout, 0, 0)
+
+        self.create_labeled_input_row("Msg to Stim Jim1:", top_grid, 1)
+        self.create_labeled_input_row("Msg to Stim Jim2:", top_grid, 2)
+        self.create_labeled_input_row("Msg to Stim Jim3:", top_grid, 3)
+        self.add_grid_to_parent(top_grid, 0, 0)
+
         
-        # stim jim text entry
-        self._msg_text = QLineEdit("")
-        self._msg_text.setFont(self._regular_font)
-        #self._msg_text.setFixedWidth(150)
-        self._msg_text.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
-        top_layout.addWidget(self._msg_text)
-        self._msg_text.returnPressed.connect(self._on_send_button_clicked)
+        # # Second row - Stim Jim message
+        # stim_layout = QHBoxLayout()
         
-        # Add send button
-        send_button = QPushButton("Send")
-        send_button.setFont(self._regular_font)
-        send_button.clicked.connect(self._on_send_button_clicked)
-        top_layout.addWidget(send_button)
+        # # Stim jim label
+        # stim_label = QLabel("Msg to Stim Jim: ")
+        # stim_label.setFont(self._bold_font)
+        # stim_layout.addWidget(stim_label)
+        
+        # # stim jim text entry
+        # self._msg_text = QLineEdit("")
+        # self._msg_text.setFont(self._regular_font)
+        # #self._msg_text.setFixedWidth(250)
+        # self._msg_text.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
+        # self._msg_text.returnPressed.connect(self._on_send_button_clicked)
+        # stim_layout.addWidget(self._msg_text)
+        
+        # # Add send button
+        # send_button = QPushButton("Send")
+        # send_button.setFont(self._regular_font)
+        # send_button.clicked.connect(self._on_send_button_clicked)
+        # stim_layout.addWidget(send_button)
+        
+        # # Add stim jim row to grid
+        # top_grid.addLayout(stim_layout, 1, 0)
+        
+        # # Add the entire top section to main layout
+        # self._layout.addLayout(top_grid, 0, 0)
 
-        self._command_entry = QLineEdit("")
-        self._command_entry.setFont(self._regular_font)
-        self._command_entry.setPlaceholderText("Enter a command...")
-        self._command_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
-        self._command_entry.returnPressed.connect(self._on_user_command_entered)
+        # # Add stretch to push everything to the left
+        # subject_layout.addStretch()
+        # stim_layout.addStretch()
         
 
 
-
-
-        self._subject_entry.editingFinished.connect(self._on_subject_name_edited)
-        left_grid.addWidget(self._subject_entry, 0, 1)
 
         #Stage label
         # stage_label = QLabel("Stage: ")
@@ -267,9 +261,9 @@ class MainWindow(QMainWindow):
         # right_grid.addWidget(self._percent_label, 1, 3)
 
         #Add the primary grid to the layout object
-        self._layout.addLayout(grid, 0, 0)
+        #self._layout.addLayout(grid, 0, 0)
         #Add the horizontal layout to the main layout
-        self._layout.addLayout(top_layout, 0, 0)
+        #self._layout.addLayout(top_layout, 0, 0)
 
     def _create_middle_section(self) -> None:
         """
@@ -424,6 +418,87 @@ class MainWindow(QMainWindow):
     #endregion
 
     #region Overrides
+
+    def _send_callback(self) -> None:
+        """
+        Handler for send button clicks from any of the input rows.
+        """
+        # Get the sender (the button or text entry that triggered the callback)
+        sender = self.sender()
+        
+        # Find which text entry was used
+        text_entry = None
+        stim_number = None
+        if isinstance(sender, QLineEdit):
+            text_entry = sender
+            # Find which Stim Jim this is
+            if text_entry in self._msg_text_list:
+                stim_number = self._msg_text_list.index(text_entry) + 1
+        elif isinstance(sender, QPushButton):
+            # Get the text entry associated with this button's row
+            # (it will be the previous widget in the layout)
+            layout = sender.parent().layout()
+            for i in range(layout.count()):
+                if isinstance(layout.itemAt(i).widget(), QLineEdit):
+                    text_entry = layout.itemAt(i).widget()
+                    stim_number = self._msg_text_list.index(widget) + 1
+                    break
+
+        if text_entry and text_entry.text().strip():
+            # Add to session messages
+            message = SessionMessage(f"Message to stim jim{stim_number}: {text_entry.text()}")
+            self._session_messages.append(message)
+            self._update_session_messages()
+            
+            # Clear the text entry
+            text_entry.clear()
+
+    #Stim jim row creation
+    def create_labeled_input_row(self, label_text, grid_layout, row_index, column_index=0):
+        """
+        Creates a labeled input row with a label, text entry, and send button.
+
+        Args:
+            label_text (str): The text for the label.
+            grid_layout (QGridLayout): The grid layout to which the row will be added.
+            row_index (int): The row index in the grid layout.
+            column_index (int): The column index in the grid layout. Defaults to 0.
+        """
+        row_layout = QHBoxLayout()
+
+        # Label
+        label = QLabel(label_text)
+        label.setFont(self._bold_font)
+        row_layout.addWidget(label)
+
+        # Text entry
+        text_entry = QLineEdit("")
+        text_entry.setFont(self._regular_font)
+        text_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
+        text_entry.returnPressed.connect(self._send_callback)
+        row_layout.addWidget(text_entry)
+        self._msg_text_list.append(text_entry) #store the text entry for later access.
+
+        # Send button
+        send_button = QPushButton("Send")
+        send_button.setFont(self._regular_font)
+        send_button.clicked.connect(self._send_callback)
+        row_layout.addWidget(send_button)
+
+        # Add row layout to the grid
+        grid_layout.addLayout(row_layout, row_index, column_index)
+        row_layout.addStretch() #push to the left.
+
+    def add_grid_to_parent(self, grid_layout, parent_row, parent_column):
+        """
+        Adds the grid layout to the parent layout.
+
+        Args:
+            grid_layout (QGridLayout): The grid layout to be added.
+            parent_row (int): The row index in the parent layout.
+            parent_column (int): The column index in the parent layout.
+        """
+        self._layout.addLayout(grid_layout, parent_row, parent_column)
 
 #    def closeEvent(self, event):
 #         '''
@@ -769,4 +844,19 @@ class MainWindow(QMainWindow):
          """
         self._live_emg_line_object.setData(self._live_emg_x_data, self._emg_signal_data)
         
+    def _on_send_button_clicked(self) -> None:
+        """
+        Handler for send button clicks.
+        """
+        # Get text from subject entry
+        message = self._msg_text.text()
+        
+        if message.strip():  # Only send if there's actual text
+            # Add to session messages
+            message = SessionMessage(f"Message to stim jim: {message}")
+            self._session_messages.append(message)
+            self._update_session_messages()
+            
+            # Optionally clear the text box after sending
+            self._msg_text.clear()
     #endregion
