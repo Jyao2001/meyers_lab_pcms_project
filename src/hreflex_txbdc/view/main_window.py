@@ -140,16 +140,40 @@ class MainWindow(QMainWindow):
         display the booth number and information about the selected stage.
         """
 
+        #Create the grid
+        grid = QGridLayout()
+        #grid.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+        grid.setColumnStretch(0, 1)
+        grid.setColumnStretch(1, 1)
+
+        #Create a sub-grid on the left side for the subject and stage
+        left_grid = QGridLayout()
+        grid.addLayout(left_grid, 0, 0)
+
+        #Subject label
+        subject_label = QLabel("Subject: ")
+        subject_label.setFont(self._bold_font) 
+        left_grid.addWidget(subject_label, 0, 0)
+        
+        #Subject text entry
+        self._subject_entry = QLineEdit("")
+        self._subject_entry.setFont(self._regular_font)
+        self._subject_entry.setFixedWidth(150)
+        self._subject_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
+
+        self._subject_entry.editingFinished.connect(self._on_subject_name_edited)
+        left_grid.addWidget(self._subject_entry, 0, 1)
+
         # Create the main horizontal layout for top section
         top_layout = QHBoxLayout()
         top_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)  # Left align the layout
         
-        # Subject label
-        subject_label = QLabel("Message to Stim Jim: ")
-        subject_label.setFont(self._bold_font) 
-        top_layout.addWidget(subject_label)
+        # Stim jim label
+        stim_label = QLabel("Message to Stim Jim: ")
+        stim_label.setFont(self._bold_font) 
+        top_layout.addWidget(stim_label)
         
-        # Subject text entry
+        # stim jim text entry
         self._msg_text = QLineEdit("")
         self._msg_text.setFont(self._regular_font)
         #self._msg_text.setFixedWidth(150)
@@ -163,22 +187,18 @@ class MainWindow(QMainWindow):
         send_button.clicked.connect(self._on_send_button_clicked)
         top_layout.addWidget(send_button)
 
-        # self._command_entry = QLineEdit("")
-        # self._command_entry.setFont(self._regular_font)
-        # self._command_entry.setPlaceholderText("Enter a command...")
-        # self._command_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
-        # self._command_entry.returnPressed.connect(self._on_user_command_entered)
+        self._command_entry = QLineEdit("")
+        self._command_entry.setFont(self._regular_font)
+        self._command_entry.setPlaceholderText("Enter a command...")
+        self._command_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
+        self._command_entry.returnPressed.connect(self._on_user_command_entered)
         
-        # Add the horizontal layout to the main layout
-        self._layout.addLayout(top_layout, 0, 0)
 
 
 
 
-
-
-        #self._subject_entry.editingFinished.connect(self._on_subject_name_edited)
-        #left_grid.addWidget(self._subject_entry, 0, 1)
+        self._subject_entry.editingFinished.connect(self._on_subject_name_edited)
+        left_grid.addWidget(self._subject_entry, 0, 1)
 
         #Stage label
         # stage_label = QLabel("Stage: ")
@@ -247,7 +267,9 @@ class MainWindow(QMainWindow):
         # right_grid.addWidget(self._percent_label, 1, 3)
 
         #Add the primary grid to the layout object
-        #self._layout.addLayout(grid, 0, 0)
+        self._layout.addLayout(grid, 0, 0)
+        #Add the horizontal layout to the main layout
+        self._layout.addLayout(top_layout, 0, 0)
 
     def _create_middle_section(self) -> None:
         """
@@ -289,29 +311,30 @@ class MainWindow(QMainWindow):
         live_emg_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         #This plot widget will show the session history
-        self._session_history_plot_widget = pg.PlotWidget()
-        self._session_history_plot_widget.setBackground('w')
+        # self._session_history_plot_widget = pg.PlotWidget()
+        # self._session_history_plot_widget.setBackground('w')
         
-        #This plot will show the most recent trial
-        self._previous_trial_plot_widget = pg.PlotWidget()
-        self._previous_trial_plot_widget.setBackground('w')
+        # #This plot will show the most recent trial
+        # self._previous_trial_plot_widget = pg.PlotWidget()
+        # self._previous_trial_plot_widget.setBackground('w')
 
         #This plot will show the live EMG data
         self._live_emg_graph_widget = pg.PlotWidget()
-        #self._initialize_live_emg_plot()
+        self._initialize_live_emg_plot()
 
         # Add both plots to the middle layout
-        #middle_grid.addWidget(history_plot_label, 0, 0)
+        # middle_grid.addWidget(history_plot_label, 0, 0)
         # middle_grid.addWidget(self._session_history_plot_selection_box, 0, 0)
         # middle_grid.addWidget(self._most_recent_trial_plot_selection_box, 0, 1)
-        # middle_grid.addWidget(live_emg_label, 0, 2)
+        middle_grid.addWidget(live_emg_label, 0, 2)
 
         # middle_grid.addWidget(self._session_history_plot_widget, 1, 0)
         # middle_grid.addWidget(self._previous_trial_plot_widget, 1, 1)
-        # middle_grid.addWidget(self._live_emg_graph_widget, 1, 2)
+        middle_grid.addWidget(self._live_emg_graph_widget, 1, 2)
 
         #Add this section to the window's layout
         self._layout.addLayout(middle_grid, 1, 0)
+        
 
     def _create_bottom_section(self) -> None:
         """
@@ -355,7 +378,7 @@ class MainWindow(QMainWindow):
         self._start_stop_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
         #self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
         self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
-        self._start_stop_button.setEnabled(True)
+        self._start_stop_button.setEnabled(False)
         #self._start_stop_button.clicked.connect(self._on_start_stop_button_clicked)
 
         self._pause_button = QPushButton("Pause")
@@ -424,43 +447,43 @@ class MainWindow(QMainWindow):
 
     #region Event handlers
 
-    # def _on_subject_name_edited (self) -> None:
-    #     '''
-    #     This method handles input of the subject name by the user. It filters
-    #     the subject name so that it fits the criteria for subject names, and then
-    #     sets the text on the subject entry field to be the validated text.
-    #     '''
+    def _on_subject_name_edited (self) -> None:
+        '''
+        This method handles input of the subject name by the user. It filters
+        the subject name so that it fits the criteria for subject names, and then
+        sets the text on the subject entry field to be the validated text.
+        '''
 
-    #     #Get the text entered by the user
-    #     current_text: str = self._subject_entry.text()
+        #Get the text entered by the user
+        current_text: str = self._subject_entry.text()
 
-    #     #Filter the string so it only contains the following allowed characters:
-    #     #   1. Alphanumeric characters
-    #     #   2. Hyphens or underscores
-    #     #All other character, including whitespace characters, will be removed.
-    #     current_text = ''.join([
-    #         c if (c.isalnum() or c == '-' or c == '_') else '' for c in current_text
-    #     ])
+        #Filter the string so it only contains the following allowed characters:
+        #   1. Alphanumeric characters
+        #   2. Hyphens or underscores
+        #All other character, including whitespace characters, will be removed.
+        current_text = ''.join([
+            c if (c.isalnum() or c == '-' or c == '_') else '' for c in current_text
+        ])
 
-    #     #Now change the string to all uppercase characters, and set the subject name private variable.
-    #     self._subject_name = current_text.upper()
+        #Now change the string to all uppercase characters, and set the subject name private variable.
+        self._subject_name = current_text.upper()
 
-    #     #Now set the text on the text entry to the updated subject name
-    #     self._subject_entry.setText(self._subject_name)
+        #Now set the text on the text entry to the updated subject name
+        self._subject_entry.setText(self._subject_name)
 
-    #     #Check to see if the start/stop button should be enabled
-    #     if (len(self._subject_entry.text()) > 0):#and (self._selected_stage is not None):
-    #         #If so...
+        #Check to see if the start/stop button should be enabled
+        if (len(self._subject_entry.text()) > 0):#and (self._selected_stage is not None):
+            #If so...
 
-    #         #Enable the start/stop button
-    #         self._start_stop_button.setEnabled(True)
-    #         self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
-    #     else:
-    #         #If not...
+            #Enable the start/stop button
+            self._start_stop_button.setEnabled(True)
+            self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
+        else:
+            #If not...
 
-    #         #Disable the start/stop button
-    #         self._start_stop_button.setEnabled(False)
-    #         self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
+            #Disable the start/stop button
+            self._start_stop_button.setEnabled(False)
+            self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
 
     # def _on_stage_selection_changed (self) -> None:
     #     '''
@@ -723,27 +746,27 @@ class MainWindow(QMainWindow):
 
     #region Plot Methods
 
-    # def _initialize_live_emg_plot (self) -> None:
-    #     '''
-    #     Configures the Live EMG plot
-    #     '''
+    def _initialize_live_emg_plot (self) -> None:
+        '''
+        Configures the Live EMG plot
+        '''
 
-    #     #Style the plot
-    #     self._live_emg_graph_widget.setBackground('w')
-    #     self._live_emg_graph_widget.setYRange(-250, 250, padding = 0)
+        #Style the plot
+        self._live_emg_graph_widget.setBackground('w')
+        self._live_emg_graph_widget.setYRange(-250, 250, padding = 0)
 
-    #     #Create the line object that will be used for updating the data
-    #     pen = pg.mkPen(color = (0, 0, 255), width = 2)
-    #     self._live_emg_x_data = list(range(0, len(self._emg_signal_data)))
-    #     self._live_emg_line_object = self._live_emg_graph_widget.plot(self._live_emg_x_data, self._emg_signal_data, pen = pen)
+        #Create the line object that will be used for updating the data
+        pen = pg.mkPen(color = (0, 0, 255), width = 2)
+        self._live_emg_x_data = list(range(0, len(self._emg_signal_data)))
+        self._live_emg_line_object = self._live_emg_graph_widget.plot(self._live_emg_x_data, self._emg_signal_data, pen = pen)
 
-    # def _plot_live_emg(self) -> None:
-    #     """
-    #     Plots the current live EMG data.
+    def _plot_live_emg(self) -> None:
+        """
+        Plots the current live EMG data.
 
-    #     Parameters:
-    #         figure (Figure): Matplotlib Figure object for the live EMG plot.
-    #     """
-    #     self._live_emg_line_object.setData(self._live_emg_x_data, self._emg_signal_data)
+        Parameters:
+            figure (Figure): Matplotlib Figure object for the live EMG plot.
+         """
+        self._live_emg_line_object.setData(self._live_emg_x_data, self._emg_signal_data)
         
     #endregion
