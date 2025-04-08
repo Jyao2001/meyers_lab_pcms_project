@@ -137,63 +137,16 @@ class MainWindow(QMainWindow):
         # First row - Subject entry
         subject_layout = QHBoxLayout()
         
-        # Subject label
-        subject_label = QLabel("Subject: ")
-        subject_label.setFont(self._bold_font)
-        subject_layout.addWidget(subject_label)
-        
-        # Subject text entry
-        self._subject_entry = QLineEdit("")
-        self._subject_entry.setFont(self._regular_font)
-        #self._subject_entry.setFixedWidth(150)
-        self._subject_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
-        self._subject_entry.editingFinished.connect(self._on_subject_name_edited)
-        subject_layout.addWidget(self._subject_entry)
+        self.create_text_and_box("Subject", subject_layout)
+        self.create_button("Upload from CSV", subject_layout)
         
         # Add subject row to grid
         top_grid.addLayout(subject_layout, 0, 0)
 
-        self.create_labeled_input_row("Msg to Stim Jim1:", top_grid, 1)
-        self.create_labeled_input_row("Msg to Stim Jim2:", top_grid, 2)
-        self.create_labeled_input_row("Msg to Stim Jim3:", top_grid, 3)
+        self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 1)
+        self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 2)
+        self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 3)
         self.add_grid_to_parent(top_grid, 0, 0)
-
-        
-        # # Second row - Stim Jim message
-        # stim_layout = QHBoxLayout()
-        
-        # # Stim jim label
-        # stim_label = QLabel("Msg to Stim Jim: ")
-        # stim_label.setFont(self._bold_font)
-        # stim_layout.addWidget(stim_label)
-        
-        # # stim jim text entry
-        # self._msg_text = QLineEdit("")
-        # self._msg_text.setFont(self._regular_font)
-        # #self._msg_text.setFixedWidth(250)
-        # self._msg_text.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
-        # self._msg_text.returnPressed.connect(self._on_send_button_clicked)
-        # stim_layout.addWidget(self._msg_text)
-        
-        # # Add send button
-        # send_button = QPushButton("Send")
-        # send_button.setFont(self._regular_font)
-        # send_button.clicked.connect(self._on_send_button_clicked)
-        # stim_layout.addWidget(send_button)
-        
-        # # Add stim jim row to grid
-        # top_grid.addLayout(stim_layout, 1, 0)
-        
-        # # Add the entire top section to main layout
-        # self._layout.addLayout(top_grid, 0, 0)
-
-        # # Add stretch to push everything to the left
-        # subject_layout.addStretch()
-        # stim_layout.addStretch()
-        
-
-
-
         #Stage label
         # stage_label = QLabel("Stage: ")
         # stage_label.setFont(self._bold_font)
@@ -218,13 +171,11 @@ class MainWindow(QMainWindow):
         #Create another sub-grid on the right side that will display stage information
         # right_grid = QGridLayout()
         # right_grid.setColumnStretch(0, 1)
-        # right_grid.setColumnStretch(1, 1)
-        # right_grid.setColumnStretch(2, 1)
-        # right_grid.setColumnStretch(3, 1)
+        # # right_grid.setColumnStretch(1, 1)
+        # # right_grid.setColumnStretch(2, 1)
+        # # right_grid.setColumnStretch(3, 1)
 
-        # grid.addLayout(right_grid, 0, 1)
-
-        #Create labels for the booth name
+        # # Create labels for the booth name
         # booth = QLabel("Booth: ")
         # booth.setFont(self._bold_font)
         # right_grid.addWidget(booth, 0, 0)
@@ -233,6 +184,7 @@ class MainWindow(QMainWindow):
         # self._booth_label.setFont(self._regular_font)
         # right_grid.addWidget(self._booth_label, 0, 1)
 
+        # self.add_grid_to_parent(right_grid, 0, 1)
         # #Create labels for the stage's VNS information
         # vns = QLabel("VNS: ")
         # vns.setFont(self._bold_font)
@@ -454,36 +406,35 @@ class MainWindow(QMainWindow):
             text_entry.clear()
 
     #Stim jim row creation
-    def create_labeled_input_row(self, label_text, grid_layout, row_index, column_index=0):
+    def create_labeled_input_row(self, setup_command, trigger_command, interval, grid_layout, row_index, column_index=0):
         """
         Creates a labeled input row with a label, text entry, and send button.
 
         Args:
-            label_text (str): The text for the label.
+            setup_command (str): The text for stimulation setup command.
+            trigger_command (str):The text to fire the loaded sequence.
+            interval (str): The text for the interval execution interval.
             grid_layout (QGridLayout): The grid layout to which the row will be added.
             row_index (int): The row index in the grid layout.
             column_index (int): The column index in the grid layout. Defaults to 0.
         """
         row_layout = QHBoxLayout()
 
+
+        self.create_text_and_box(setup_command, row_layout)
+
+        self.create_button("Joe Mama", row_layout)
+
+        self.create_text_and_box(trigger_command, row_layout)
+        
+        self.create_text_and_box("Every", row_layout, 50)
+
         # Label
-        label = QLabel(label_text)
+        label = QLabel("Seconds")
         label.setFont(self._bold_font)
         row_layout.addWidget(label)
 
-        # Text entry
-        text_entry = QLineEdit("")
-        text_entry.setFont(self._regular_font)
-        text_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
-        text_entry.returnPressed.connect(self._send_callback)
-        row_layout.addWidget(text_entry)
-        self._msg_text_list.append(text_entry) #store the text entry for later access.
-
-        # Send button
-        send_button = QPushButton("Send")
-        send_button.setFont(self._regular_font)
-        send_button.clicked.connect(self._send_callback)
-        row_layout.addWidget(send_button)
+        self.create_button("Send", row_layout)
 
         # Add row layout to the grid
         grid_layout.addLayout(row_layout, row_index, column_index)
@@ -774,6 +725,43 @@ class MainWindow(QMainWindow):
     # def _on_message_received_from_stage (self, message: SessionMessage) -> None:
     #     self._session_messages.append(message)
     #     self._update_session_messages()
+
+    def create_text_and_box(self, name, layout, text_width=None):
+        """
+        Creates the text and textbox.
+
+        Args:
+            name (int): The name of the text.
+            layout (QGridLayout): The grid layout to be added.
+            text_width (int): The width of text box
+        """
+        # Label
+        label = QLabel(name)
+        label.setFont(self._bold_font)
+        layout.addWidget(label)
+
+        # Text entry
+        text_entry = QLineEdit("")
+        text_entry.setFont(self._regular_font)
+        text_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
+        if text_width is not None:
+            text_entry.setFixedWidth(text_width)
+        text_entry.returnPressed.connect(self._send_callback)
+        layout.addWidget(text_entry)
+        self._msg_text_list.append(text_entry) #store the text entry for later access.
+
+    def create_button(self, name, layout):
+        """
+        Creates the button
+
+        Args:
+            name (int): The name of the button.
+            layout (QGridLayout): The grid layout to be added.
+        """
+        button = QPushButton(name)
+        button.setFont(self._regular_font)
+        button.clicked.connect(self._send_callback)
+        layout.addWidget(button)
 
     def _on_user_command_entered (self) -> None:
         #if (self._is_session_running) and (not (self._is_session_paused)):
