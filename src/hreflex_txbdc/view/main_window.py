@@ -28,7 +28,7 @@ from typing import Tuple
 
 from ..model.background_worker import BackgroundWorker
 from ..model.stages.stage import Stage
-#from ..model.stages.emg_characterization_stage import EmgCharacterizationStage
+from ..model.stages.emg_characterization_stage import EmgCharacterizationStage
 from ..model.stages.mh_recruitment_curve_stage import MhRecruitmentCurveStage
 from ..model.session_message import SessionMessage
 from ..model.application_configuration import ApplicationConfiguration
@@ -60,13 +60,13 @@ class MainWindow(QMainWindow):
         # Initialize a list of stages
         self._stages: list[Stage] = []
 
-        #emg_characterization_stage: EmgCharacterizationStage = EmgCharacterizationStage()
-        #mh_recruitment_curve_stage: MhRecruitmentCurveStage = MhRecruitmentCurveStage()
-        #self._stages.append(emg_characterization_stage)
-        #self._stages.append(mh_recruitment_curve_stage)
+        emg_characterization_stage: EmgCharacterizationStage = EmgCharacterizationStage()
+        mh_recruitment_curve_stage: MhRecruitmentCurveStage = MhRecruitmentCurveStage()
+        self._stages.append(emg_characterization_stage)
+        self._stages.append(mh_recruitment_curve_stage)
 
         # Initialize the "selected stage"
-        #self._selected_stage: Stage = self._stages[0]
+        self._selected_stage: Stage = self._stages[0]
 
         # Initialize a variable to hold the subject name
         self._subject_name: str = ""
@@ -113,8 +113,8 @@ class MainWindow(QMainWindow):
         self._frame_start = datetime.now()
 
         # Set the session and plot widgets on each stage
-        for s in self._stages:
-            s.set_session_and_trial_widgets(self._session_history_plot_widget, self._previous_trial_plot_widget)
+        # for s in self._stages:
+        #     s.set_session_and_trial_widgets(self._session_history_plot_widget, self._previous_trial_plot_widget)
 
         # Initialize the threadpool and the background worker
         #self.threadpool = QThreadPool()
@@ -134,40 +134,44 @@ class MainWindow(QMainWindow):
         top_grid.setRowStretch(0, 1)
         top_grid.setRowStretch(1, 1)
         
-        # First row - Subject entry
+        # First row left - Subject entry
         subject_layout = QHBoxLayout()
+        top_grid.addLayout(subject_layout, 0, 0)
         
-        self.create_text_and_box("Subject", subject_layout)
+        self.create_text_and_box("Subject: ", subject_layout)
         self.create_button("Upload from CSV", subject_layout)
         
+        #First row right - Stage dropdown
+        stage_layout = QHBoxLayout()
+        top_grid.addLayout(stage_layout, 0, 1)
+        stage_label = QLabel("Stage: ")
+        stage_label.setFont(self._bold_font)
+        stage_layout.addWidget(stage_label)
+
+        #Stage selection box
+        self._stage_selection_box = QComboBox()
+        self._stage_selection_box.setFixedWidth(500)
+        self._stage_selection_box.setFont(self._regular_font)
+        self._stage_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
+        self._stage_selection_box.currentIndexChanged.connect(self._on_stage_selection_changed)
+        stage_layout.addWidget(self._stage_selection_box)
+
+        #Populate the stage selection box
+        stage_strings: list[str] = []
+        for s in self._stages:
+            stage_str: str = f"({s.stage_name}) {s.stage_description}"
+            stage_strings.append(stage_str)
+        
+        self._stage_selection_box.addItems(stage_strings)
+
         # Add subject row to grid
-        top_grid.addLayout(subject_layout, 0, 0)
+        stimjim_layout = QHBoxLayout()
+        top_grid.addLayout(stimjim_layout, 1, 0)
 
         self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 1)
         self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 2)
         self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 3)
         self.add_grid_to_parent(top_grid, 0, 0)
-        #Stage label
-        # stage_label = QLabel("Stage: ")
-        # stage_label.setFont(self._bold_font)
-        # left_grid.addWidget(stage_label, 1, 0)
-
-        #Stage selection box
-        # self._stage_selection_box = QComboBox()
-        # self._stage_selection_box.setFixedWidth(300)
-        # self._stage_selection_box.setFont(self._regular_font)
-        # self._stage_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
-        # self._stage_selection_box.currentIndexChanged.connect(self._on_stage_selection_changed)
-        #left_grid.addWidget(self._stage_selection_box, 1, 1)
-
-        #Populate the stage selection box
-        # stage_strings: list[str] = []
-        # for s in self._stages:
-        #     stage_str: str = f"({s.stage_name}) {s.stage_description}"
-        #     stage_strings.append(stage_str)
-        
-        #self._stage_selection_box.addItems(stage_strings)
-
         #Create another sub-grid on the right side that will display stage information
         # right_grid = QGridLayout()
         # right_grid.setColumnStretch(0, 1)
@@ -227,13 +231,12 @@ class MainWindow(QMainWindow):
         middle_grid.setRowStretch(1, 1)
         middle_grid.setColumnStretch(0, 1)
         middle_grid.setColumnStretch(1, 1)
-        middle_grid.setColumnStretch(2, 1)
 
         #Create labels for each plot
-        self._session_history_plot_selection_box = QComboBox()
-        self._session_history_plot_selection_box.setFont(self._regular_font)
-        self._session_history_plot_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
-        self._session_history_plot_selection_box.setEnabled(False)
+        # self._session_history_plot_selection_box = QComboBox()
+        # self._session_history_plot_selection_box.setFont(self._regular_font)
+        # self._session_history_plot_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
+        # self._session_history_plot_selection_box.setEnabled(False)
         #self._session_history_plot_selection_box.currentIndexChanged.connect(self._on_session_history_plot_selection_index_changed)
 
         # if (self._selected_stage is not None):
@@ -241,10 +244,10 @@ class MainWindow(QMainWindow):
         #     for i in items:
         #         self._session_history_plot_selection_box.addItem(i)
         
-        self._most_recent_trial_plot_selection_box = QComboBox()
-        self._most_recent_trial_plot_selection_box.setFont(self._regular_font)
-        self._most_recent_trial_plot_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
-        self._most_recent_trial_plot_selection_box.setEnabled(False)
+        # self._most_recent_trial_plot_selection_box = QComboBox()
+        # self._most_recent_trial_plot_selection_box.setFont(self._regular_font)
+        # self._most_recent_trial_plot_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
+        # self._most_recent_trial_plot_selection_box.setEnabled(False)
         #self._most_recent_trial_plot_selection_box.currentIndexChanged.connect(self._on_most_recent_trial_plot_selection_index_changed)
 
         # if (self._selected_stage is not None):
@@ -252,13 +255,17 @@ class MainWindow(QMainWindow):
         #     for i in items:
         #         self._most_recent_trial_plot_selection_box.addItem(i)
 
+        peri_stim_label = QLabel("Peri-Stimulus EMG signal")
+        peri_stim_label.setFont(self._bold_font)
+        peri_stim_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+
         live_emg_label = QLabel("Live EMG signal")
         live_emg_label.setFont(self._bold_font)
         live_emg_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         #This plot widget will show the session history
-        # self._session_history_plot_widget = pg.PlotWidget()
-        # self._session_history_plot_widget.setBackground('w')
+        self._peri_stim_plot_widget = pg.PlotWidget()
+        self._peri_stim_plot_widget.setBackground('w')
         
         # #This plot will show the most recent trial
         # self._previous_trial_plot_widget = pg.PlotWidget()
@@ -270,13 +277,13 @@ class MainWindow(QMainWindow):
 
         # Add both plots to the middle layout
         # middle_grid.addWidget(history_plot_label, 0, 0)
-        # middle_grid.addWidget(self._session_history_plot_selection_box, 0, 0)
+        middle_grid.addWidget(peri_stim_label, 0, 0)
         # middle_grid.addWidget(self._most_recent_trial_plot_selection_box, 0, 1)
-        middle_grid.addWidget(live_emg_label, 0, 2)
+        middle_grid.addWidget(live_emg_label, 0, 1)
 
-        # middle_grid.addWidget(self._session_history_plot_widget, 1, 0)
+        middle_grid.addWidget(self._peri_stim_plot_widget, 1, 0)
         # middle_grid.addWidget(self._previous_trial_plot_widget, 1, 1)
-        middle_grid.addWidget(self._live_emg_graph_widget, 1, 2)
+        middle_grid.addWidget(self._live_emg_graph_widget, 1, 1)
 
         #Add this section to the window's layout
         self._layout.addLayout(middle_grid, 1, 0)
@@ -437,7 +444,7 @@ class MainWindow(QMainWindow):
         self.create_button("Send", row_layout)
 
         # Add row layout to the grid
-        grid_layout.addLayout(row_layout, row_index, column_index)
+        grid_layout.addLayout(row_layout, row_index, column_index, 1, 2)
         row_layout.addStretch() #push to the left.
 
     def add_grid_to_parent(self, grid_layout, parent_row, parent_column):
@@ -511,90 +518,90 @@ class MainWindow(QMainWindow):
             self._start_stop_button.setEnabled(False)
             self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
 
-    # def _on_stage_selection_changed (self) -> None:
-    #     '''
-    #     This function is executed anytime the user selects a stage
-    #     in the stage selection box.
-    #     '''
+    def _on_stage_selection_changed (self) -> None:
+        '''
+        This function is executed anytime the user selects a stage
+        in the stage selection box.
+        '''
 
-    #     #Set the selected stage
-    #     current_stage_index = self._stage_selection_box.currentIndex()
-    #     if (current_stage_index >= 0):
-    #         self._selected_stage = self._stages[current_stage_index]
-    #     else:
-    #         self._selected_stage = None
+        #Set the selected stage
+        current_stage_index = self._stage_selection_box.currentIndex()
+        if (current_stage_index >= 0):
+            self._selected_stage = self._stages[current_stage_index]
+        else:
+            self._selected_stage = None
         
-    #     #Re-populate the session plot selection combo box and the trial plot selection combo box
-    #     if (self._selected_stage is not None):
-    #         items: list[str] = self._selected_stage.get_session_plot_options()
+        #Re-populate the session plot selection combo box and the trial plot selection combo box
+        # if (self._selected_stage is not None):
+        #     items: list[str] = self._selected_stage.get_session_plot_options()
 
-    #         self._session_history_plot_selection_box.clear()
-    #         for i in items:
-    #             self._session_history_plot_selection_box.addItem(i)
+        #     self._session_history_plot_selection_box.clear()
+        #     for i in items:
+        #         self._session_history_plot_selection_box.addItem(i)
 
-    #         items: list[str] = self._selected_stage.get_trial_plot_options()
+        #     items: list[str] = self._selected_stage.get_trial_plot_options()
 
-    #         self._most_recent_trial_plot_selection_box.clear()
-    #         for i in items:
-    #             self._most_recent_trial_plot_selection_box.addItem(i)
+        #     self._most_recent_trial_plot_selection_box.clear()
+        #     for i in items:
+        #         self._most_recent_trial_plot_selection_box.addItem(i)
 
-    #     #Check to see if the start/stop button should be enabled
-    #     if (len(self._subject_entry.text()) > 0) and (self._selected_stage is not None):
-    #         #If so...
+        #Check to see if the start/stop button should be enabled
+        # if (len(self._subject_entry.text()) > 0) and (self._selected_stage is not None):
+        #     #If so...
 
-    #         #Enable the start/stop button
-    #         if (hasattr(self, "_start_stop_button")) and (self._start_stop_button is not None):
-    #             self._start_stop_button.setEnabled(True)
-    #             self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
-    #     else:
-    #         #If not...
+        #     #Enable the start/stop button
+        #     if (hasattr(self, "_start_stop_button")) and (self._start_stop_button is not None):
+        #         self._start_stop_button.setEnabled(True)
+        #         self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
+        # else:
+        #     #If not...
 
-    #         #Disable the start/stop button
-    #         if (hasattr(self, "_start_stop_button")) and (self._start_stop_button is not None):
-    #             self._start_stop_button.setEnabled(False)
-    #             self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
+        #     #Disable the start/stop button
+        #     if (hasattr(self, "_start_stop_button")) and (self._start_stop_button is not None):
+        #         self._start_stop_button.setEnabled(False)
+        #         self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
 
-    # def _on_data_received (self, received: Tuple[np.ndarray, float]) -> None:
-    #     #Grab the data was sent from Open Ephys
-    #     data = received[0]
-    #     sample_rate = received[1]
+    def _on_data_received (self, received: Tuple[np.ndarray, float]) -> None:
+        #Grab the data was sent from Open Ephys
+        data = received[0]
+        sample_rate = received[1]
 
-    #     #Append the new data to the live EMG signal array, and remove old data
-    #     self._emg_signal_data = np.concatenate([self._emg_signal_data, data])
-    #     if (len(self._emg_signal_data) > self._emg_signal_data_max_length):
-    #         elements_to_remove = len(self._emg_signal_data) - self._emg_signal_data_max_length
-    #         self._emg_signal_data = self._emg_signal_data[elements_to_remove:]
+        #Append the new data to the live EMG signal array, and remove old data
+        self._emg_signal_data = np.concatenate([self._emg_signal_data, data])
+        if (len(self._emg_signal_data) > self._emg_signal_data_max_length):
+            elements_to_remove = len(self._emg_signal_data) - self._emg_signal_data_max_length
+            self._emg_signal_data = self._emg_signal_data[elements_to_remove:]
         
-    #     #For debugging purposes, keep a count of how many frames per second we are achieving
-    #     self._frame_count += 1
-    #     self._sample_count += len(data)
+        #For debugging purposes, keep a count of how many frames per second we are achieving
+        self._frame_count += 1
+        self._sample_count += len(data)
 
-    #     if (self._min_sample_count == -1) or (len(data) < self._min_sample_count):
-    #         self._min_sample_count = len(data)
+        if (self._min_sample_count == -1) or (len(data) < self._min_sample_count):
+            self._min_sample_count = len(data)
         
-    #     if (self._max_sample_count == -1) or (len(data) > self._max_sample_count):
-    #         self._max_sample_count = len(data)
+        if (self._max_sample_count == -1) or (len(data) > self._max_sample_count):
+            self._max_sample_count = len(data)
         
-    #     current_time = datetime.now()
-    #     if (current_time >= (self._frame_start + timedelta(seconds=1))):
-    #         samples_per_frame = self._sample_count / self._frame_count
-    #         print(f"Frame count = {self._frame_count}, Sample count = {self._sample_count}, Samples per frame = {samples_per_frame}, Min samples per frame = {self._min_sample_count}, Max samples per frame = {self._max_sample_count}, Sample rate = {sample_rate}")
-    #         self._min_sample_count = -1
-    #         self._max_sample_count = -1
-    #         self._frame_start = current_time
-    #         self._frame_count = 0
-    #         self._sample_count = 0
+        current_time = datetime.now()
+        if (current_time >= (self._frame_start + timedelta(seconds=1))):
+            samples_per_frame = self._sample_count / self._frame_count
+            print(f"Frame count = {self._frame_count}, Sample count = {self._sample_count}, Samples per frame = {samples_per_frame}, Min samples per frame = {self._min_sample_count}, Max samples per frame = {self._max_sample_count}, Sample rate = {sample_rate}")
+            self._min_sample_count = -1
+            self._max_sample_count = -1
+            self._frame_start = current_time
+            self._frame_count = 0
+            self._sample_count = 0
         
-    #     #Check to see if a session is actively running
-    #     if (self._is_session_running) and (not (self._is_session_paused)):
-    #         #If so, process the data through the selected stage
-    #         self._selected_stage.process(data)
+        #Check to see if a session is actively running
+        if (self._is_session_running) and (not (self._is_session_paused)):
+            #If so, process the data through the selected stage
+            self._selected_stage.process(data)
 
-    #     #Plot the live emg data
-    #     self._plot_live_emg()
+        #Plot the live emg data
+        self._plot_live_emg()
 
-    #     #Return from this function
-    #     return
+        #Return from this function
+        return
 
     # def _on_start_stop_button_clicked (self) -> None:
     #     if (not self._is_session_running):
@@ -760,8 +767,10 @@ class MainWindow(QMainWindow):
         """
         button = QPushButton(name)
         button.setFont(self._regular_font)
+        button.setFixedWidth(150)
         button.clicked.connect(self._send_callback)
         layout.addWidget(button)
+        layout.addStretch()
 
     def _on_user_command_entered (self) -> None:
         #if (self._is_session_running) and (not (self._is_session_paused)):
