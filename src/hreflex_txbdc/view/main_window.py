@@ -11,12 +11,14 @@ from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QPlainTextEdit,
-    QMessageBox
+    QMessageBox,
+    QSpacerItem
 )
 
 from PySide6.QtGui import QFont
 from PySide6.QtCore import QThreadPool
 from PySide6 import QtCore
+from PySide6.QtCore import Qt
 import pyqtgraph as pg
 import numpy as np
 import pandas as pd
@@ -299,6 +301,8 @@ class MainWindow(QMainWindow):
         bottom_layout: QGridLayout = QGridLayout()
         bottom_layout.setColumnStretch(0, 1)
         bottom_layout.setColumnStretch(1, 0)
+        bottom_layout.setColumnStretch(2, 0)
+        bottom_layout.setColumnStretch(3, 0)
         bottom_layout.setRowStretch(0, 0)
         bottom_layout.setRowStretch(1, 1)
 
@@ -323,6 +327,105 @@ class MainWindow(QMainWindow):
         self._session_message_box = QPlainTextEdit()
         self._session_message_box.setFont(self._regular_font)
         self._session_message_box.setReadOnly(True)
+
+        # Create 2 buttons: brain stim, nerve stim.
+        self._brain_stim_button = QPushButton("Brain Stim")
+        self._brain_stim_button.setFont(self._regular_font)
+        self._brain_stim_button.setFixedWidth(100)
+        self._brain_stim_button.setMaximumHeight(150)
+        self._brain_stim_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
+        self._brain_stim_button.setStyleSheet('QPushButton {color: red;}')
+        self._brain_stim_button.setEnabled(True)
+        self._brain_stim_button.clicked.connect(self._on_brain_stim_button_clicked)
+
+        self._nerve_stim_button = QPushButton("Nerve Stim")
+        self._nerve_stim_button.setFont(self._regular_font)
+        self._nerve_stim_button.setFixedWidth(100)
+        self._nerve_stim_button.setMaximumHeight(150)
+        self._nerve_stim_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
+        self._nerve_stim_button.setStyleSheet('QPushButton {color: red;}')
+        self._nerve_stim_button.setEnabled(True)
+        self._nerve_stim_button.clicked.connect(self._on_nerve_stim_button_clicked)
+
+        # Create a grid layout to hold the buttons
+        stim_button_layout = QGridLayout()
+        stim_button_layout.setRowStretch(0, 1)
+        stim_button_layout.setRowStretch(1, 1)
+        
+        # Add the buttons to the button layout
+        stim_button_layout.addWidget(self._brain_stim_button, 0, 0)
+        stim_button_layout.addWidget(self._nerve_stim_button, 1, 0)
+
+        # Create 4 buttons: up and down buttons for brain/nerve stim
+        self._brain_stim_up_button = QPushButton("▲")
+        self._brain_stim_up_button.setFixedSize(30, 30)
+        self._brain_stim_up_button.setEnabled(True)
+        self._brain_stim_up_button.clicked.connect(self._on_brain_stim_up_button_clicked)
+        self._brain_stim_down_button = QPushButton("▼")
+        self._brain_stim_down_button.setFixedSize(30, 30)
+        self._brain_stim_down_button.setEnabled(True)
+        self._brain_stim_down_button.clicked.connect(self._on_brain_stim_down_button_clicked)
+        
+        self._nerve_stim_up_button = QPushButton("▲")
+        self._nerve_stim_up_button.setFixedSize(30, 30)
+        self._nerve_stim_up_button.setEnabled(True)
+        self._nerve_stim_up_button.clicked.connect(self._on_nerve_stim_up_button_clicked)
+        self._nerve_stim_down_button = QPushButton("▼")
+        self._nerve_stim_down_button.setFixedSize(30, 30)
+        self._nerve_stim_down_button.setEnabled(True)
+        self._nerve_stim_down_button.clicked.connect(self._on_nerve_stim_down_button_clicked)
+
+        # Create default values of stimulation amplitudes
+        self._brain_stim_value = 5.0    # µA
+        self._nerve_stim_value = 3.0    # µA
+        self._stim_step_size = 0.1      # µA step per click
+
+        # Create 2 text boxes: brain/nerve stim amplitude
+        self._brain_stim_amplitude = QLineEdit()
+        self._brain_stim_amplitude.setFixedSize(30, 30)
+        self._brain_stim_amplitude.setText(f"{self._brain_stim_value:.1f}")
+        
+        self._nerve_stim_amplitude = QLineEdit()
+        self._nerve_stim_amplitude.setFixedSize(30, 30)
+        self._nerve_stim_amplitude.setText(f"{self._nerve_stim_value:.1f}")
+
+        # Create 2 box layouts: brain/nerve stim amplitude textbox and µA label
+        brain_amplitude_layout = QHBoxLayout()
+        brain_amplitude_layout.addWidget(self._brain_stim_amplitude, alignment=Qt.AlignCenter)
+        brain_amplitude_label = QLabel("µA")        # label for stim amplitude unit
+        brain_amplitude_label.setAlignment(Qt.AlignVCenter)
+        brain_amplitude_layout.addWidget(brain_amplitude_label)
+        
+        nerve_amplitude_layout = QHBoxLayout()
+        nerve_amplitude_layout.addWidget(self._nerve_stim_amplitude, alignment=Qt.AlignCenter)
+        nerve_amplitude_label = QLabel("µA")        # label for stim amplitude unit
+        nerve_amplitude_label.setAlignment(Qt.AlignVCenter)
+        nerve_amplitude_layout.addWidget(nerve_amplitude_label)
+
+        # Create box layout to hold brain stim combo of up/amplitude/down
+        brain_combo_layout = QVBoxLayout()
+        brain_combo_layout.addStretch(1)
+        brain_combo_layout.addWidget(self._brain_stim_up_button)
+        brain_combo_layout.addLayout(brain_amplitude_layout)
+        brain_combo_layout.addWidget(self._brain_stim_down_button)
+        brain_combo_layout.addStretch(1)
+        
+        # Create box layout to hold nerve stim combo of up/amplitude/down
+        nerve_combo_layout = QVBoxLayout()
+        nerve_combo_layout.addStretch(1)
+        nerve_combo_layout.addWidget(self._nerve_stim_up_button)
+        nerve_combo_layout.addLayout(nerve_amplitude_layout)
+        nerve_combo_layout.addWidget(self._nerve_stim_down_button)
+        nerve_combo_layout.addStretch(1)
+
+        # Create a grid layout to hold up/down buttons
+        up_down_button_layout = QGridLayout()
+        up_down_button_layout.setRowStretch(0, 1)  # brain stim layout
+        up_down_button_layout.setRowStretch(1, 1)  # nerve stim layout
+
+        # Add the combo box layout to the up/down button layout
+        up_down_button_layout.addLayout(brain_combo_layout, 0, 0)
+        up_down_button_layout.addLayout(nerve_combo_layout, 1, 0)
 
         #Create 3 buttons: start/stop, pause, and feed
         self._start_stop_button = QPushButton("Start")
@@ -366,8 +469,14 @@ class MainWindow(QMainWindow):
         bottom_layout.addWidget(session_message_box_label, 0, 0)
         bottom_layout.addLayout(message_command_layout, 1, 0)
 
+        # Add the brain/nerve stim layout to the bottom layout
+        bottom_layout.addLayout(stim_button_layout, 0, 1, 2, 1)
+
+        # Add the up/down button layout to the bottom layout
+        bottom_layout.addLayout(up_down_button_layout, 0, 2, 2, 1)
+
         #Add the button layout to the bottom layout
-        bottom_layout.addLayout(button_layout, 0, 1, 2, 1)
+        bottom_layout.addLayout(button_layout, 0, 3, 2, 1)
 
         #Add the bottom layout to the primary grid layout
         self._layout.addLayout(bottom_layout, 2, 0)
@@ -602,6 +711,38 @@ class MainWindow(QMainWindow):
 
         #Return from this function
         return
+    
+    def _on_brain_stim_button_clicked (self) -> None:
+        # Send session message
+        message: SessionMessage = SessionMessage("brain zapped")
+        self._session_messages.append(message)
+        self._update_session_messages()
+    
+    def _on_nerve_stim_button_clicked (self) -> None:
+        # Send session message
+        message: SessionMessage = SessionMessage("nerve zapped")
+        self._session_messages.append(message)
+        self._update_session_messages()
+
+    def _on_brain_stim_up_button_clicked (self) -> None:
+        # Increase value by 0.1
+        self._brain_stim_value += self._stim_step_size
+        self._brain_stim_amplitude.setText(f"{self._brain_stim_value:.1f}")
+
+    def _on_brain_stim_down_button_clicked (self) -> None:
+        # Decrease value by 0.1
+        self._brain_stim_value = max(0.0, self._brain_stim_value - self._stim_step_size)
+        self._brain_stim_amplitude.setText(f"{self._brain_stim_value:.1f}")
+
+    def _on_nerve_stim_up_button_clicked (self) -> None:
+        # Increase value by 0.1
+        self._nerve_stim_value += self._stim_step_size
+        self._nerve_stim_amplitude.setText(f"{self._nerve_stim_value:.1f}")
+
+    def _on_nerve_stim_down_button_clicked (self) -> None:
+        # Increase value by 0.1
+        self._nerve_stim_value = max(0.0, self._nerve_stim_value - self._stim_step_size)
+        self._nerve_stim_amplitude.setText(f"{self._nerve_stim_value:.1f}")
 
     # def _on_start_stop_button_clicked (self) -> None:
     #     if (not self._is_session_running):
