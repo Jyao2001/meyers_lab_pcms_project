@@ -336,7 +336,7 @@ class MainWindow(QMainWindow):
         self._brain_stim_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
         self._brain_stim_button.setStyleSheet('QPushButton {color: red;}')
         self._brain_stim_button.setEnabled(True)
-        self._brain_stim_button.clicked.connect(self._on_brain_stim_button_clicked)
+        self._brain_stim_button.clicked.connect(self._on_single_stim_button_clicked)
 
         self._nerve_stim_button = QPushButton("Nerve Stim")
         self._nerve_stim_button.setFont(self._regular_font)
@@ -345,7 +345,7 @@ class MainWindow(QMainWindow):
         self._nerve_stim_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
         self._nerve_stim_button.setStyleSheet('QPushButton {color: red;}')
         self._nerve_stim_button.setEnabled(True)
-        self._nerve_stim_button.clicked.connect(self._on_nerve_stim_button_clicked)
+        self._nerve_stim_button.clicked.connect(self._on_single_stim_button_clicked)
 
         # Create a grid layout to hold the buttons
         stim_button_layout = QGridLayout()
@@ -381,23 +381,27 @@ class MainWindow(QMainWindow):
         self._stim_step_size = 0.1      # µA step per click
 
         # Create 2 text boxes: brain/nerve stim amplitude
-        self._brain_stim_amplitude = QLineEdit()
-        self._brain_stim_amplitude.setFixedSize(30, 30)
-        self._brain_stim_amplitude.setText(f"{self._brain_stim_value:.1f}")
+        self._brain_stim_amplitude_textbox = QLineEdit()
+        self._brain_stim_amplitude_textbox.setFixedSize(30, 30)
+        self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
+        self._brain_stim_amplitude_textbox.editingFinished.connect(self._on_stim_amplitude_changed)
+        self._brain_stim_button.setAutoDefault(False)
         
-        self._nerve_stim_amplitude = QLineEdit()
-        self._nerve_stim_amplitude.setFixedSize(30, 30)
-        self._nerve_stim_amplitude.setText(f"{self._nerve_stim_value:.1f}")
+        self._nerve_stim_amplitude_textbox = QLineEdit()
+        self._nerve_stim_amplitude_textbox.setFixedSize(30, 30)
+        self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
+        self._nerve_stim_amplitude_textbox.editingFinished.connect(self._on_stim_amplitude_changed)
+        self._nerve_stim_button.setAutoDefault(False)
 
         # Create 2 box layouts: brain/nerve stim amplitude textbox and µA label
         brain_amplitude_layout = QHBoxLayout()
-        brain_amplitude_layout.addWidget(self._brain_stim_amplitude, alignment=Qt.AlignCenter)
+        brain_amplitude_layout.addWidget(self._brain_stim_amplitude_textbox, alignment=Qt.AlignCenter)
         brain_amplitude_label = QLabel("µA")        # label for stim amplitude unit
         brain_amplitude_label.setAlignment(Qt.AlignVCenter)
         brain_amplitude_layout.addWidget(brain_amplitude_label)
         
         nerve_amplitude_layout = QHBoxLayout()
-        nerve_amplitude_layout.addWidget(self._nerve_stim_amplitude, alignment=Qt.AlignCenter)
+        nerve_amplitude_layout.addWidget(self._nerve_stim_amplitude_textbox, alignment=Qt.AlignCenter)
         nerve_amplitude_label = QLabel("µA")        # label for stim amplitude unit
         nerve_amplitude_label.setAlignment(Qt.AlignVCenter)
         nerve_amplitude_layout.addWidget(nerve_amplitude_label)
@@ -712,37 +716,103 @@ class MainWindow(QMainWindow):
         #Return from this function
         return
     
-    def _on_brain_stim_button_clicked (self) -> None:
-        # Send session message
-        message: SessionMessage = SessionMessage("brain zapped")
+    def _on_single_stim_button_clicked(self) -> None:
+        """
+        Handles clicks for Brain/Nerve Stim buttons.
+        Outputs which stimjim (row) was activated and the amplitude used.
+        """
+        sender = self.sender()
+        stim_number = None
+        amplitude = None
+        label = None
+
+        # Determine if it's brain or nerve based on which button was clicked
+        if sender == self._brain_stim_button:
+            label = "Brain"
+            amplitude = self._brain_stim_value
+            stim_number = 1
+        elif sender == self._nerve_stim_button:
+            label = "Nerve"
+            amplitude = self._nerve_stim_value
+            stim_number = 2
+        else:
+            # Unknown sender
+            return
+
+        # Format and send the message
+        message = SessionMessage(f"{label} Stim (stimjim {stim_number}): {amplitude:.1f} µA")
         self._session_messages.append(message)
         self._update_session_messages()
-    
-    def _on_nerve_stim_button_clicked (self) -> None:
-        # Send session message
-        message: SessionMessage = SessionMessage("nerve zapped")
-        self._session_messages.append(message)
-        self._update_session_messages()
+
 
     def _on_brain_stim_up_button_clicked (self) -> None:
         # Increase value by 0.1
         self._brain_stim_value += self._stim_step_size
-        self._brain_stim_amplitude.setText(f"{self._brain_stim_value:.1f}")
+        self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
 
     def _on_brain_stim_down_button_clicked (self) -> None:
         # Decrease value by 0.1
         self._brain_stim_value = max(0.0, self._brain_stim_value - self._stim_step_size)
-        self._brain_stim_amplitude.setText(f"{self._brain_stim_value:.1f}")
+        self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
 
     def _on_nerve_stim_up_button_clicked (self) -> None:
         # Increase value by 0.1
         self._nerve_stim_value += self._stim_step_size
-        self._nerve_stim_amplitude.setText(f"{self._nerve_stim_value:.1f}")
+        self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
 
     def _on_nerve_stim_down_button_clicked (self) -> None:
         # Increase value by 0.1
         self._nerve_stim_value = max(0.0, self._nerve_stim_value - self._stim_step_size)
-        self._nerve_stim_amplitude.setText(f"{self._nerve_stim_value:.1f}")
+        self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
+
+    def _on_stim_amplitude_changed(self) -> None:
+        # Error handler for when non-numeric is imputted in textbox.
+        brain_text = self._brain_stim_amplitude_textbox.text()
+        nerve_text = self._nerve_stim_amplitude_textbox.text()
+
+        try:
+            self._brain_stim_value = float(brain_text)
+        except ValueError:
+            self._brain_stim_value = 5.0
+            self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
+            self._session_messages.append(SessionMessage("Invalid brain stim input! Reset to 5.0 µA."))
+            self._update_session_messages() 
+
+        try:
+            self._nerve_stim_value = float(nerve_text)
+        except ValueError:
+            self._nerve_stim_value = 3.0
+            self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
+            self._session_messages.append(SessionMessage("Invalid nerve stim input! Reset to 3.0 µA."))
+            self._update_session_messages()
+
+        # Set default values for the stim
+        stim_info = [
+            {
+                "label": "brain",
+                "value": self._brain_stim_value,
+                "default": 5.0,
+                "textbox": self._brain_stim_amplitude_textbox,
+                "set_func": lambda v: setattr(self, "_brain_stim_value", v)
+            },
+            {
+                "label": "nerve",
+                "value": self._nerve_stim_value,
+                "default": 3.0,
+                "textbox": self._nerve_stim_amplitude_textbox,
+                "set_func": lambda v: setattr(self, "_nerve_stim_value", v)
+            }
+        ]
+
+        # Reject negative values according to the above default values
+        for stim in stim_info:
+            if stim["value"] < 0:
+                stim["set_func"](stim["default"])
+                stim["textbox"].setText(f"{stim['default']:.1f}")
+                self._session_messages.append(
+                    SessionMessage(f"Negative {stim['label']} stim input! Reset to {stim['default']:.1f} µA.")
+                )
+                self._update_session_messages()
 
     # def _on_start_stop_button_clicked (self) -> None:
     #     if (not self._is_session_running):
