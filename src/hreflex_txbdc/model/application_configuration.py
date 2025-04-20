@@ -1,5 +1,6 @@
 from serial.tools.list_ports_common import ListPortInfo
 import serial
+import time
 
 from .stimjim import StimJim, PulseTrain, PulseStage, StimJimOutputModes, STIMJIM_SERIAL_BAUDRATE
 
@@ -24,7 +25,7 @@ class ApplicationConfiguration:
 
     @staticmethod
     def connect_to_stimjim (port: ListPortInfo) -> None:
-        new_serial = serial.Serial(port, baudrate=STIMJIM_SERIAL_BAUDRATE)
+        new_serial = serial.Serial(port.device, baudrate=STIMJIM_SERIAL_BAUDRATE)
         new_stimjim = StimJim(new_serial)
         
         ApplicationConfiguration.stimjim_serial.append(new_serial)
@@ -90,17 +91,66 @@ class ApplicationConfiguration:
         if (0 <= index < len(ApplicationConfiguration.stimjim)):
             stimjim = ApplicationConfiguration.stimjim[index]
             stimjim.pulse_trains[0] = pulse_train
+
             stimjim.send_command(stimjim_cmd_str)
+            stimjim.send_command("O0 1")
+            stimjim.send_command("M0 0")
+
+            time.sleep(0.1)
             ApplicationConfiguration.last_stimjim_command[index] = stimjim_cmd_str
 
+        pass
         # Original Code
         """
         if (ApplicationConfiguration.stimjim is not None):
             ApplicationConfiguration.stimjim.pulse_trains[0] = pulse_train
             ApplicationConfiguration.stimjim.send_command(stimjim_cmd_str)
 
-        pass
         """
+
+    @staticmethod
+    def set_biphasic_stimulus_pulse_parameters_on_stimjim (index: int, amplitude_ma: float) -> None:
+        #Standard VNS parameters:
+        #   Current = decided by the call of the function
+        #   Frequency = 30 Hz
+        #   Pulse phase width = 500 us
+        #   Biphasic pulse
+        #   Train duration = 20 s (20000000 microseconds)
+        #   Total pulses = 15
+        #   Pulses are delivered every 50 ms (or 50000 microseconds)
+
+        #StimJim command:
+        #S0,1,3,50000,20000000; X,0,500; -X,0,500
+        #See the documentation for how this command is composed:
+        #   https://github.com/open-ephys/stimjim
+
+        #Calculate the amplitude in microamps
+        ampltidue_ua: int = int(amplitude_ma * 1000.0)
+
+        #Create two pulse stages
+        pulse_stage_01: PulseStage = PulseStage(ampltidue_ua, 0, 500)
+        pulse_stage_02: PulseStage = PulseStage(-ampltidue_ua, 5000, 500)
+
+        #Create the pulse train
+        pulse_train: PulseTrain = PulseTrain(0, 50000, 20000000, 
+            [StimJimOutputModes.CURRENT, StimJimOutputModes.GROUNDED],
+            [pulse_stage_01, pulse_stage_02])
+
+        #Set the stimulation parameters on the StimJim
+        stimjim_cmd_str: str = pulse_train.get_stimjim_string()
+
+        if (0 <= index < len(ApplicationConfiguration.stimjim)):
+            stimjim = ApplicationConfiguration.stimjim[index]
+            stimjim.pulse_trains[0] = pulse_train
+
+            stimjim.send_command(stimjim_cmd_str)
+            stimjim.send_command("O0 1")
+            stimjim.send_command("M0 0")
+
+            time.sleep(0.1)
+            ApplicationConfiguration.last_stimjim_command[index] = stimjim_cmd_str
+
+        pass
 
     @staticmethod
     def set_standard_vns_stimulation_parameters_on_stimjim (index: int) -> None:
@@ -133,16 +183,21 @@ class ApplicationConfiguration:
         if (0 <= index < len(ApplicationConfiguration.stimjim)):
             stimjim = ApplicationConfiguration.stimjim[index]
             stimjim.pulse_trains[0] = pulse_train
+
             stimjim.send_command(stimjim_cmd_str)
+            stimjim.send_command("O0 1")
+            stimjim.send_command("M0 0")
+
+            time.sleep(0.1)
             ApplicationConfiguration.last_stimjim_command[index] = stimjim_cmd_str
 
+        pass
         # Original code
         """
         if (ApplicationConfiguration.stimjim is not None):
             ApplicationConfiguration.stimjim.pulse_trains[0] = pulse_train
             ApplicationConfiguration.stimjim.send_command(stimjim_cmd_str)
 
-        pass
         """
 
     #endregion

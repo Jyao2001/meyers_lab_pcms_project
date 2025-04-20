@@ -28,8 +28,8 @@ def main () -> None:
         return
 
     #Connect to the StimJim
-    if (len(possible_ports) > 0):
-        ApplicationConfiguration.connect_to_stimjim(possible_ports[0].device)
+    for port in possible_ports:
+        ApplicationConfiguration.connect_to_stimjim(port)
 
     #Instantiate the MainWindow object
     window = MainWindow()

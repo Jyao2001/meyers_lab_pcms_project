@@ -25,6 +25,7 @@ import pandas as pd
 import os
 from datetime import datetime
 from datetime import timedelta
+import time
 
 from typing import Tuple
 
@@ -740,7 +741,7 @@ class MainWindow(QMainWindow):
             return
             
         # Set StimJim parameters
-        ApplicationConfiguration.set_monophasic_stimulus_pulse_parameters_on_stimjim(stim_number, amplitude)
+        ApplicationConfiguration.set_biphasic_stimulus_pulse_parameters_on_stimjim(stim_number, amplitude)
 
         # Output an error message if no StimJim is found. Else, send command "T0" to send stimulation
         if not (0 <= stim_number < len(ApplicationConfiguration.stimjim)) or ApplicationConfiguration.stimjim[stim_number] is None:
@@ -751,6 +752,9 @@ class MainWindow(QMainWindow):
 
         else:
             stimjim = ApplicationConfiguration.stimjim[stim_number]
+            
+            time.sleep(0.2)     # wait for stimjim to get the parameters
+
             stimjim.send_command("T0")
 
             # Format and send the message
