@@ -12,28 +12,54 @@ class ApplicationConfiguration:
     appauthor: str = "TxBDC"
 
     #StimJim serial connection
-    stimjim_serial: serial.Serial = None
+    stimjim_serial: list[serial.Serial] = []
 
     #StimJim object
-    stimjim: StimJim = None
+    stimjim: list[StimJim] = []
+
+    # Last parameters sent to StimJim added for ease of tracking
+    last_stimjim_command: list[str] = []
 
     #region Methods
 
     @staticmethod
     def connect_to_stimjim (port: ListPortInfo) -> None:
+        new_serial = serial.Serial(port, baudrate=STIMJIM_SERIAL_BAUDRATE)
+        new_stimjim = StimJim(new_serial)
+        
+        ApplicationConfiguration.stimjim_serial.append(new_serial)
+        ApplicationConfiguration.stimjim.append(new_stimjim)
+        ApplicationConfiguration.last_stimjim_command.append("")
+
+        # Original code
+        """
         ApplicationConfiguration.stimjim_serial = serial.Serial(port, baudrate = STIMJIM_SERIAL_BAUDRATE)
         ApplicationConfiguration.stimjim = StimJim(ApplicationConfiguration.stimjim_serial)
+        """
 
     @staticmethod
-    def disconnect_from_stimjim () -> None:
+    def disconnect_from_stimjim (index: int) -> None:
+        if 0 <= index < len(ApplicationConfiguration.stimjim_serial):
+            serial_port = ApplicationConfiguration.stimjim_serial[index]
+            if serial_port.is_open:
+                serial_port.close()
+            
+            # Remove from all lists
+            ApplicationConfiguration.stimjim_serial.pop(index)
+            ApplicationConfiguration.stimjim.pop(index)
+            ApplicationConfiguration.last_stimjim_command.pop(index)
+
+        # Original code
+        """
         if (ApplicationConfiguration.stimjim_serial is not None):
             if (ApplicationConfiguration.stimjim_serial.is_open):
                 ApplicationConfiguration.stimjim_serial.close()
         
         ApplicationConfiguration.stimjim = None
+        """
 
     @staticmethod
-    def set_monophasic_stimulus_pulse_parameters_on_stimjim (amplitude_ma: float) -> None:
+    def set_monophasic_stimulus_pulse_parameters_on_stimjim (index: int, amplitude_ma: float) -> None:
         #Standard VNS parameters:
         #   Current = decided by the caller of the function
         #   Frequency = N/A
@@ -61,14 +87,23 @@ class ApplicationConfiguration:
         #Set the stimulation parameters on the StimJim
         stimjim_cmd_str: str = pulse_train.get_stimjim_string()
 
+        if (0 <= index < len(ApplicationConfiguration.stimjim)):
+            stimjim = ApplicationConfiguration.stimjim[index]
+            stimjim.pulse_trains[0] = pulse_train
+            stimjim.send_command(stimjim_cmd_str)
+            ApplicationConfiguration.last_stimjim_command[index] = stimjim_cmd_str
+
+        # Original Code
+        """
         if (ApplicationConfiguration.stimjim is not None):
             ApplicationConfiguration.stimjim.pulse_trains[0] = pulse_train
             ApplicationConfiguration.stimjim.send_command(stimjim_cmd_str)
 
         pass
+        """
 
     @staticmethod
-    def set_standard_vns_stimulation_parameters_on_stimjim () -> None:
+    def set_standard_vns_stimulation_parameters_on_stimjim (index: int) -> None:
         #Standard VNS parameters:
         #   Current = 0.8 mA (800 uA)
         #   Frequency = 30 Hz
@@ -95,10 +130,19 @@ class ApplicationConfiguration:
         #Set the stimulation parameters on the StimJim
         stimjim_cmd_str: str = pulse_train.get_stimjim_string()
 
+        if (0 <= index < len(ApplicationConfiguration.stimjim)):
+            stimjim = ApplicationConfiguration.stimjim[index]
+            stimjim.pulse_trains[0] = pulse_train
+            stimjim.send_command(stimjim_cmd_str)
+            ApplicationConfiguration.last_stimjim_command[index] = stimjim_cmd_str
+
+        # Original code
+        """
         if (ApplicationConfiguration.stimjim is not None):
             ApplicationConfiguration.stimjim.pulse_trains[0] = pulse_train
             ApplicationConfiguration.stimjim.send_command(stimjim_cmd_str)
 
         pass
+        """
 
     #endregion

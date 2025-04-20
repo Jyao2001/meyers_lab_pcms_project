@@ -396,13 +396,13 @@ class MainWindow(QMainWindow):
         # Create 2 box layouts: brain/nerve stim amplitude textbox and µA label
         brain_amplitude_layout = QHBoxLayout()
         brain_amplitude_layout.addWidget(self._brain_stim_amplitude_textbox, alignment=Qt.AlignCenter)
-        brain_amplitude_label = QLabel("µA")        # label for stim amplitude unit
+        brain_amplitude_label = QLabel("mA")        # label for stim amplitude unit
         brain_amplitude_label.setAlignment(Qt.AlignVCenter)
         brain_amplitude_layout.addWidget(brain_amplitude_label)
         
         nerve_amplitude_layout = QHBoxLayout()
         nerve_amplitude_layout.addWidget(self._nerve_stim_amplitude_textbox, alignment=Qt.AlignCenter)
-        nerve_amplitude_label = QLabel("µA")        # label for stim amplitude unit
+        nerve_amplitude_label = QLabel("mA")        # label for stim amplitude unit
         nerve_amplitude_label.setAlignment(Qt.AlignVCenter)
         nerve_amplitude_layout.addWidget(nerve_amplitude_label)
 
@@ -730,20 +730,33 @@ class MainWindow(QMainWindow):
         if sender == self._brain_stim_button:
             label = "Brain"
             amplitude = self._brain_stim_value
-            stim_number = 1
+            stim_number = 0
         elif sender == self._nerve_stim_button:
             label = "Nerve"
             amplitude = self._nerve_stim_value
-            stim_number = 2
+            stim_number = 1
         else:
             # Unknown sender
             return
+            
+        # Set StimJim parameters
+        ApplicationConfiguration.set_monophasic_stimulus_pulse_parameters_on_stimjim(stim_number, amplitude)
 
-        # Format and send the message
-        message = SessionMessage(f"{label} Stim (stimjim {stim_number}): {amplitude:.1f} µA")
-        self._session_messages.append(message)
-        self._update_session_messages()
+        # Output an error message if no StimJim is found. Else, send command "T0" to send stimulation
+        if not (0 <= stim_number < len(ApplicationConfiguration.stimjim)) or ApplicationConfiguration.stimjim[stim_number] is None:
+            # Format and send the message
+            message = SessionMessage(f"StimJim {stim_number} not connected!")
+            self._session_messages.append(message)
+            self._update_session_messages()
 
+        else:
+            stimjim = ApplicationConfiguration.stimjim[stim_number]
+            stimjim.send_command("T0")
+
+            # Format and send the message
+            message = SessionMessage(f"{label} Stim (stimjim {stim_number}): {ApplicationConfiguration.last_stimjim_command[stim_number]}")
+            self._session_messages.append(message)
+            self._update_session_messages()
 
     def _on_brain_stim_up_button_clicked (self) -> None:
         # Increase value by 0.1
@@ -775,7 +788,7 @@ class MainWindow(QMainWindow):
         except ValueError:
             self._brain_stim_value = 5.0
             self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
-            self._session_messages.append(SessionMessage("Invalid brain stim input! Reset to 5.0 µA."))
+            self._session_messages.append(SessionMessage("Invalid brain stim input! Reset to 5.0 mA."))
             self._update_session_messages() 
 
         try:
@@ -783,7 +796,7 @@ class MainWindow(QMainWindow):
         except ValueError:
             self._nerve_stim_value = 3.0
             self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
-            self._session_messages.append(SessionMessage("Invalid nerve stim input! Reset to 3.0 µA."))
+            self._session_messages.append(SessionMessage("Invalid nerve stim input! Reset to 3.0 mA."))
             self._update_session_messages()
 
         # Set default values for the stim
@@ -810,7 +823,7 @@ class MainWindow(QMainWindow):
                 stim["set_func"](stim["default"])
                 stim["textbox"].setText(f"{stim['default']:.1f}")
                 self._session_messages.append(
-                    SessionMessage(f"Negative {stim['label']} stim input! Reset to {stim['default']:.1f} µA.")
+                    SessionMessage(f"Negative {stim['label']} stim input! Reset to {stim['default']:.1f} mA.")
                 )
                 self._update_session_messages()
 
