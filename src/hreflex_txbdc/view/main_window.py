@@ -88,15 +88,13 @@ class MainWindow(QMainWindow):
 
         # Main layout container
         self._layout: QGridLayout = QGridLayout()
-        # self._layout.setRowStretch(0, 0)
+        self._layout.setRowStretch(0, 0)
         # self._layout.setRowStretch(1, 1)
-        # self._layout.setRowStretch(2, 1)
-        # self._layout.setRowStretch(3, 0)
-        # Format: setRowStretch(row_number, stretch_factor)
-        self._layout.setRowStretch(0, 5)    # Top section - increased
         self._layout.setRowStretch(1, 2)    # Middle section - increased
+        # self._layout.setRowStretch(2, 1)
         self._layout.setRowStretch(2, 2)    # Bottom section - decreased
         self._layout.setRowStretch(3, 0)
+        # Format: setRowStretch(row_number, stretch_factor)
 
         # Initialize layout sections
         self._create_top_section()
@@ -120,10 +118,10 @@ class MainWindow(QMainWindow):
         #     s.set_session_and_trial_widgets(self._session_history_plot_widget, self._previous_trial_plot_widget)
 
         # Initialize the threadpool and the background worker
-        #self.threadpool = QThreadPool()
-        #self.background_worker = BackgroundWorker()
-        #self.background_worker.signals.data_received_signal.connect(self._on_data_received)
-        #self.threadpool.start(self.background_worker)
+        self.threadpool = QThreadPool()
+        self.background_worker = BackgroundWorker()
+        self.background_worker.signals.data_received_signal.connect(self._on_data_received)
+        self.threadpool.start(self.background_worker)
 
     #endregion
             
@@ -134,8 +132,8 @@ class MainWindow(QMainWindow):
         """
         # Create main top layout as a grid with 2 rows
         top_grid = QGridLayout()
-        top_grid.setRowStretch(0, 1)
-        top_grid.setRowStretch(1, 1)
+        top_grid.setColumnStretch(0, 1)
+        top_grid.setColumnStretch(1, 1)
         
         # First row left - Subject entry
         subject_layout = QHBoxLayout()
@@ -153,11 +151,11 @@ class MainWindow(QMainWindow):
 
         #Stage selection box
         self._stage_selection_box = QComboBox()
-        self._stage_selection_box.setFixedWidth(500)
         self._stage_selection_box.setFont(self._regular_font)
         self._stage_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
         self._stage_selection_box.currentIndexChanged.connect(self._on_stage_selection_changed)
         stage_layout.addWidget(self._stage_selection_box)
+        stage_layout.addStretch()
 
         #Populate the stage selection box
         stage_strings: list[str] = []
@@ -168,13 +166,8 @@ class MainWindow(QMainWindow):
         self._stage_selection_box.addItems(stage_strings)
 
         # Add subject row to grid
-        stimjim_layout = QHBoxLayout()
-        top_grid.addLayout(stimjim_layout, 1, 0)
+        self._layout.addLayout(top_grid, 0, 0)
 
-        self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 1)
-        self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 2)
-        self.create_labeled_input_row("Config:", "Trigger", "a", top_grid, 3)
-        self.add_grid_to_parent(top_grid, 0, 0)
         #Create another sub-grid on the right side that will display stage information
         # right_grid = QGridLayout()
         # right_grid.setColumnStretch(0, 1)
@@ -526,69 +519,23 @@ class MainWindow(QMainWindow):
             # Clear the text entry
             text_entry.clear()
 
-    #Stim jim row creation
-    def create_labeled_input_row(self, setup_command, trigger_command, interval, grid_layout, row_index, column_index=0):
-        """
-        Creates a labeled input row with a label, text entry, and send button.
+    def closeEvent(self, event):
+        '''
+        This method is called when the user attempts to close the application window.
+        This method handles gracefully shutting the application down.
+        '''
 
-        Args:
-            setup_command (str): The text for stimulation setup command.
-            trigger_command (str):The text to fire the loaded sequence.
-            interval (str): The text for the interval execution interval.
-            grid_layout (QGridLayout): The grid layout to which the row will be added.
-            row_index (int): The row index in the grid layout.
-            column_index (int): The column index in the grid layout. Defaults to 0.
-        """
-        row_layout = QHBoxLayout()
+        #Disconnect from the data received signal
+        self.background_worker.signals.data_received_signal.disconnect(self._on_data_received)
 
+        #Shut down the background thread
+        self.background_worker.cancel()
 
-        self.create_text_and_box(setup_command, row_layout)
+        #Close the StimJim serial connection if it exists
+        ApplicationConfiguration.disconnect_from_stimjim()
 
-        self.create_button("Joe Mama", row_layout)
-
-        self.create_text_and_box(trigger_command, row_layout)
-        
-        self.create_text_and_box("Every", row_layout, 50)
-
-        # Label
-        label = QLabel("Seconds")
-        label.setFont(self._bold_font)
-        row_layout.addWidget(label)
-
-        self.create_button("Send", row_layout)
-
-        # Add row layout to the grid
-        grid_layout.addLayout(row_layout, row_index, column_index, 1, 2)
-        row_layout.addStretch() #push to the left.
-
-    def add_grid_to_parent(self, grid_layout, parent_row, parent_column):
-        """
-        Adds the grid layout to the parent layout.
-
-        Args:
-            grid_layout (QGridLayout): The grid layout to be added.
-            parent_row (int): The row index in the parent layout.
-            parent_column (int): The column index in the parent layout.
-        """
-        self._layout.addLayout(grid_layout, parent_row, parent_column)
-
-#    def closeEvent(self, event):
-#         '''
-#         This method is called when the user attempts to close the application window.
-#         This method handles gracefully shutting the application down.
-#         '''
-
-#         #Disconnect from the data received signal
-#         self.background_worker.signals.data_received_signal.disconnect(self._on_data_received)
-
-#         #Shut down the background thread
-#         self.background_worker.cancel()
-
-#         #Close the StimJim serial connection if it exists
-#         ApplicationConfiguration.disconnect_from_stimjim()
-
-#         #Accept the event
-#         event.accept()
+        #Accept the event
+        event.accept()
 
     #endregion
 
@@ -1035,12 +982,12 @@ class MainWindow(QMainWindow):
 
     #     pass
 
-    # def _clear_session_messages (self) -> None:
-    #     #Clear the session messages
-    #     self._session_messages.clear()
+    def _clear_session_messages (self) -> None:
+        #Clear the session messages
+        self._session_messages.clear()
 
-    #     #Clear the UI edit box
-    #     self._session_message_box.clear()
+        #Clear the UI edit box
+        self._session_message_box.clear()
 
     #endregion
 
