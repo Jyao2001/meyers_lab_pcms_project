@@ -115,12 +115,11 @@ class ApplicationConfiguration:
         #   Frequency = 30 Hz
         #   Pulse phase width = 500 us
         #   Biphasic pulse
-        #   Train duration = 20 s (20000000 microseconds)
-        #   Total pulses = 15
-        #   Pulses are delivered every 50 ms (or 50000 microseconds)
+        #   Train duration = 500 us (500 microseconds)
+        #   Total pulses = 1
 
         #StimJim command:
-        #S0,1,3,50000,20000000; X,0,500; -X,0,500
+        #S0,1,3,0,500; X,0,500; -X,0,500
         #See the documentation for how this command is composed:
         #   https://github.com/open-ephys/stimjim
 
@@ -129,10 +128,10 @@ class ApplicationConfiguration:
 
         #Create two pulse stages
         pulse_stage_01: PulseStage = PulseStage(ampltidue_ua, 0, 500)
-        pulse_stage_02: PulseStage = PulseStage(-ampltidue_ua, 5000, 500)
+        pulse_stage_02: PulseStage = PulseStage(-ampltidue_ua, 0, 500)
 
         #Create the pulse train
-        pulse_train: PulseTrain = PulseTrain(0, 50000, 20000000, 
+        pulse_train: PulseTrain = PulseTrain(0, 0, 500, 
             [StimJimOutputModes.CURRENT, StimJimOutputModes.GROUNDED],
             [pulse_stage_01, pulse_stage_02])
 
