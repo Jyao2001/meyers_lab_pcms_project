@@ -39,16 +39,18 @@ class ApplicationConfiguration:
         """
 
     @staticmethod
-    def disconnect_from_stimjim (index: int) -> None:
-        if 0 <= index < len(ApplicationConfiguration.stimjim_serial):
-            serial_port = ApplicationConfiguration.stimjim_serial[index]
-            if serial_port.is_open:
-                serial_port.close()
-            
+    def disconnect_from_stimjim () -> None:     # change to take input index to disconnect individual stimjims
+        #if 0 <= index < len(ApplicationConfiguration.stimjim_serial):
+        if (ApplicationConfiguration.stimjim_serial is not None):
+            for serial_port in ApplicationConfiguration.stimjim_serial:
+                #serial_port = ApplicationConfiguration.stimjim_serial[index]
+                if serial_port.is_open:
+                    serial_port.close()
+                
             # Remove from all lists
-            ApplicationConfiguration.stimjim_serial.pop(index)
-            ApplicationConfiguration.stimjim.pop(index)
-            ApplicationConfiguration.last_stimjim_command.pop(index)
+            ApplicationConfiguration.stimjim_serial = None
+            ApplicationConfiguration.stimjim = None
+            ApplicationConfiguration.last_stimjim_command = None
 
         # Original code
         """
@@ -115,7 +117,7 @@ class ApplicationConfiguration:
         #   Frequency = 30 Hz
         #   Pulse phase width = 500 us
         #   Biphasic pulse
-        #   Train duration = 500 us (500 microseconds)
+        #   Train duration = 500 ms (500000 microseconds)
         #   Total pulses = 1
 
         #StimJim command:
@@ -131,7 +133,7 @@ class ApplicationConfiguration:
         pulse_stage_02: PulseStage = PulseStage(-ampltidue_ua, 0, 500)
 
         #Create the pulse train
-        pulse_train: PulseTrain = PulseTrain(0, 0, 500, 
+        pulse_train: PulseTrain = PulseTrain(0, 0, 500000, 
             [StimJimOutputModes.CURRENT, StimJimOutputModes.GROUNDED],
             [pulse_stage_01, pulse_stage_02])
 
@@ -146,7 +148,7 @@ class ApplicationConfiguration:
             stimjim.send_command("O0 1")
             stimjim.send_command("M0 0")
 
-            time.sleep(0.1)
+            time.sleep(0.01)
             ApplicationConfiguration.last_stimjim_command[index] = stimjim_cmd_str
 
         pass

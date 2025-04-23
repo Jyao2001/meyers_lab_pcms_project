@@ -507,7 +507,7 @@ class MainWindow(QMainWindow):
             for i in range(layout.count()):
                 if isinstance(layout.itemAt(i).widget(), QLineEdit):
                     text_entry = layout.itemAt(i).widget()
-                    stim_number = self._msg_text_list.index(widget) + 1
+                    stim_number = self._msg_text_list.index(i) + 1
                     break
 
         if text_entry and text_entry.text().strip():
