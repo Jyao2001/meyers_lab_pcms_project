@@ -140,7 +140,7 @@ class MainWindow(QMainWindow):
         top_grid.addLayout(subject_layout, 0, 0)
         
         self.create_text_and_box("Subject: ", subject_layout)
-        self.create_button("Upload from CSV", subject_layout)
+        #self.create_button("Upload from CSV", subject_layout)
         
         #First row right - Stage dropdown
         stage_layout = QHBoxLayout()
