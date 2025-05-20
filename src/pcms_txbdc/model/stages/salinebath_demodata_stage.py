@@ -13,7 +13,7 @@ from ..session_message import SessionMessage
 from ..application_configuration import ApplicationConfiguration
 from ..fileio_helpers import FileIO_Helpers
 
-class EmgCharacterizationStage (Stage):
+class SalineBathDemoDataStage (Stage):
 
     #region Constants
 
@@ -42,9 +42,9 @@ class EmgCharacterizationStage (Stage):
         super().__init__()
 
         #Set the basic stage information
-        self.stage_name = "S1"
-        self.stage_description = "EMG Characterization"
-        self.stage_type = Stage.STAGE_TYPE_EMG_CHARACTERIZATION
+        self.stage_name = "S0"
+        self.stage_description = "Saline Bath Demo Data"
+        self.stage_type = Stage.STAGE_TYPE_SALINE_DEMO_DATA
 
         #Declare a variable to hold the monitored signal
         self._monitored_signal: np.ndarray = np.zeros(1)
@@ -149,8 +149,8 @@ class EmgCharacterizationStage (Stage):
 
             #Bin the data
             for bin_index in range(0, len(self._bins)):
-                bin_start = EmgCharacterizationStage.BIN_DURATION_SAMPLE_COUNT * bin_index
-                bin_end = EmgCharacterizationStage.BIN_DURATION_SAMPLE_COUNT * (bin_index + 1)
+                bin_start = SalineBathDemoDataStage.BIN_DURATION_SAMPLE_COUNT * bin_index
+                bin_end = SalineBathDemoDataStage.BIN_DURATION_SAMPLE_COUNT * (bin_index + 1)
 
                 if (bin_end > len(self._monitored_signal)):
                     bin_end = len(self._monitored_signal)
@@ -164,8 +164,8 @@ class EmgCharacterizationStage (Stage):
             #If the bin grand mean is within a pre-specified min or max range, then
             #we consider this a trial initiation.
             if ((self._current_trial_sample_count >= self._monitored_signal_sample_count) and
-                (bin_grand_mean >= EmgCharacterizationStage.TRIAL_INITIATION_MIN_RANGE_MICROVOLTS) and 
-                (bin_grand_mean <= EmgCharacterizationStage.TRIAL_INITIATION_MAX_RANGE_MICROVOLTS)):
+                (bin_grand_mean >= SalineBathDemoDataStage.TRIAL_INITIATION_MIN_RANGE_MICROVOLTS) and 
+                (bin_grand_mean <= SalineBathDemoDataStage.TRIAL_INITIATION_MAX_RANGE_MICROVOLTS)):
 
                 #A trial has been initiatied...
 
@@ -221,8 +221,8 @@ class EmgCharacterizationStage (Stage):
     def _setup_new_trial (self) -> None:
         #Choose a trial-initiation monitoring duration
         dur_milliseconds: int = self._rng.randint(
-            EmgCharacterizationStage.TRIAL_INITIATION_PHASE_MIN_DURATION_MILLISECONDS,
-            EmgCharacterizationStage.TRIAL_INITIATION_PHASE_MAX_DURATION_MILLISECONDS
+            SalineBathDemoDataStage.TRIAL_INITIATION_PHASE_MIN_DURATION_MILLISECONDS,
+            SalineBathDemoDataStage.TRIAL_INITIATION_PHASE_MAX_DURATION_MILLISECONDS
         )
 
         #Round the number to the nearest 50-ms
@@ -235,7 +235,7 @@ class EmgCharacterizationStage (Stage):
         self._monitored_signal_sample_count = int(self._monitored_signal_duration_seconds * Stage.SAMPLE_RATE)
 
         #Get the number of bins we will be collecting
-        bin_count: int = int(dur_milliseconds / EmgCharacterizationStage.BIN_DURATION_MILLISECONDS)
+        bin_count: int = int(dur_milliseconds / SalineBathDemoDataStage.BIN_DURATION_MILLISECONDS)
 
         #Re-size the appropriate arrays to hold the data we care about
         self._monitored_signal = np.zeros(self._monitored_signal_sample_count)
@@ -272,7 +272,7 @@ class EmgCharacterizationStage (Stage):
         pen = pg.mkPen(color=(255, 0, 0), width = 2.0)
         xvals = list(range(0, len(self._bins)))
         for i in range(0, len(xvals)):
-            xvals[i] *= EmgCharacterizationStage.BIN_DURATION_SAMPLE_COUNT
+            xvals[i] *= SalineBathDemoDataStage.BIN_DURATION_SAMPLE_COUNT
         self._trial_widget.plot(xvals, self._bins, pen = pen)
 
         # Get the ViewBox object
@@ -309,15 +309,15 @@ class EmgCharacterizationStage (Stage):
             FileIO_Helpers.write(self._fid, "int32", self.stage_type)
 
             #Save the min and max range for trial initiation
-            FileIO_Helpers.write(self._fid, "float64", EmgCharacterizationStage.TRIAL_INITIATION_MIN_RANGE_MICROVOLTS)
-            FileIO_Helpers.write(self._fid, "float64", EmgCharacterizationStage.TRIAL_INITIATION_MAX_RANGE_MICROVOLTS)
+            FileIO_Helpers.write(self._fid, "float64", SalineBathDemoDataStage.TRIAL_INITIATION_MIN_RANGE_MICROVOLTS)
+            FileIO_Helpers.write(self._fid, "float64", SalineBathDemoDataStage.TRIAL_INITIATION_MAX_RANGE_MICROVOLTS)
 
             #Save the min and max recording duration for trial initiation criteria
-            FileIO_Helpers.write(self._fid, "int32", EmgCharacterizationStage.TRIAL_INITIATION_PHASE_MIN_DURATION_MILLISECONDS)
-            FileIO_Helpers.write(self._fid, "int32", EmgCharacterizationStage.TRIAL_INITIATION_PHASE_MAX_DURATION_MILLISECONDS)
+            FileIO_Helpers.write(self._fid, "int32", SalineBathDemoDataStage.TRIAL_INITIATION_PHASE_MIN_DURATION_MILLISECONDS)
+            FileIO_Helpers.write(self._fid, "int32", SalineBathDemoDataStage.TRIAL_INITIATION_PHASE_MAX_DURATION_MILLISECONDS)
 
             #Save the bin width
-            FileIO_Helpers.write(self._fid, "int32", EmgCharacterizationStage.BIN_DURATION_MILLISECONDS)
+            FileIO_Helpers.write(self._fid, "int32", SalineBathDemoDataStage.BIN_DURATION_MILLISECONDS)
 
             pass
 

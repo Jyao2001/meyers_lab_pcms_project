@@ -31,6 +31,7 @@ from typing import Tuple
 
 from ..model.background_worker import BackgroundWorker
 from ..model.stages.stage import Stage
+from ..model.stages.salinebath_demodata_stage import SalineBathDemoDataStage
 from ..model.stages.emg_characterization_stage import EmgCharacterizationStage
 from ..model.stages.mh_recruitment_curve_stage import MhRecruitmentCurveStage
 from ..model.session_message import SessionMessage
@@ -40,7 +41,7 @@ import serial
 
 class MainWindow(QMainWindow):
     """
-    Main application window for H-Reflex Conditioning with input fields for experimental variables
+    Main application window for PCMS Conditioning with input fields for experimental variables
     and plots to visualize trial and live EMG data.
     """
 
@@ -63,8 +64,10 @@ class MainWindow(QMainWindow):
         # Initialize a list of stages
         self._stages: list[Stage] = []
 
+        salinebath_demodata_stage: SalineBathDemoDataStage = SalineBathDemoDataStage()
         emg_characterization_stage: EmgCharacterizationStage = EmgCharacterizationStage()
         mh_recruitment_curve_stage: MhRecruitmentCurveStage = MhRecruitmentCurveStage()
+        self._stages.append(salinebath_demodata_stage)
         self._stages.append(emg_characterization_stage)
         self._stages.append(mh_recruitment_curve_stage)
 
@@ -78,7 +81,7 @@ class MainWindow(QMainWindow):
         self._session_messages: list[SessionMessage] = []
 
         # Set up window title and size
-        self.setWindowTitle("H-Reflex Conditioning")
+        self.setWindowTitle("PCMS Conditioning")
         self.resize(900, 600)  # Increased the width of the window
 
         #Create some fonts that will be used for the ui elements
@@ -430,10 +433,10 @@ class MainWindow(QMainWindow):
         self._start_stop_button.setFont(self._large_bold_font)
         self._start_stop_button.setFixedWidth(200)
         self._start_stop_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
-        #self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
+        self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
         self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
         self._start_stop_button.setEnabled(False)
-        #self._start_stop_button.clicked.connect(self._on_start_stop_button_clicked)
+        self._start_stop_button.clicked.connect(self._on_start_stop_button_clicked)
 
         self._pause_button = QPushButton("Pause")
         self._pause_button.setFont(self._large_bold_font)
@@ -606,21 +609,21 @@ class MainWindow(QMainWindow):
         #     for i in items:
         #         self._most_recent_trial_plot_selection_box.addItem(i)
 
-        #Check to see if the start/stop button should be enabled
-        # if (len(self._subject_entry.text()) > 0) and (self._selected_stage is not None):
-        #     #If so...
+        # Check to see if the start/stop button should be enabled
+        if (len(self._subject_entry.text()) > 0) and (self._selected_stage is not None):
+            #If so...
 
-        #     #Enable the start/stop button
-        #     if (hasattr(self, "_start_stop_button")) and (self._start_stop_button is not None):
-        #         self._start_stop_button.setEnabled(True)
-        #         self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
-        # else:
-        #     #If not...
+            #Enable the start/stop button
+            if (hasattr(self, "_start_stop_button")) and (self._start_stop_button is not None):
+                self._start_stop_button.setEnabled(True)
+                self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
+        else:
+            #If not...
 
-        #     #Disable the start/stop button
-        #     if (hasattr(self, "_start_stop_button")) and (self._start_stop_button is not None):
-        #         self._start_stop_button.setEnabled(False)
-        #         self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
+            #Disable the start/stop button
+            if (hasattr(self, "_start_stop_button")) and (self._start_stop_button is not None):
+                self._start_stop_button.setEnabled(False)
+                self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
 
     def _on_data_received (self, received: Tuple[np.ndarray, float]) -> None:
         #Grab the data was sent from Open Ephys
@@ -778,111 +781,111 @@ class MainWindow(QMainWindow):
                 )
                 self._update_session_messages()
 
-    # def _on_start_stop_button_clicked (self) -> None:
-    #     if (not self._is_session_running):
-    #         #Clear the list of messages
-    #         self._clear_session_messages()
+    def _on_start_stop_button_clicked (self) -> None:
+        if (not self._is_session_running):
+            #Clear the list of messages
+            self._clear_session_messages()
 
-    #         #Subscribe to signals from the selected stage
-    #         self._selected_stage.signals.new_message.connect(self._on_message_received_from_stage)
+            #Subscribe to signals from the selected stage
+            self._selected_stage.signals.new_message.connect(self._on_message_received_from_stage)
 
-    #         #Initialize the selected stage
-    #         init_result: tuple[bool, str] = self._selected_stage.initialize(self._subject_name)
+            #Initialize the selected stage
+            init_result: tuple[bool, str] = self._selected_stage.initialize(self._subject_name)
 
-    #         #Check to see if the stage can proceed
-    #         if (not init_result[0]):
-    #             #Disconnect from the signals of the selected stage
-    #             self._selected_stage.signals.new_message.disconnect(self._on_message_received_from_stage)
+            #Check to see if the stage can proceed
+            if (not init_result[0]):
+                #Disconnect from the signals of the selected stage
+                self._selected_stage.signals.new_message.disconnect(self._on_message_received_from_stage)
 
-    #             #If not, then display an error dialog box to the user
-    #             error_message: str = init_result[1]
+                #If not, then display an error dialog box to the user
+                error_message: str = init_result[1]
 
-    #             dlg: QMessageBox = QMessageBox(self)
-    #             dlg.setWindowTitle("Error during stage initialization")
-    #             dlg.setText(error_message)
-    #             dlg.exec()
+                dlg: QMessageBox = QMessageBox(self)
+                dlg.setWindowTitle("Error during stage initialization")
+                dlg.setText(error_message)
+                dlg.exec()
                 
-    #             #Return immediately from this function
-    #             return
+                #Return immediately from this function
+                return
 
-    #         #Add a session message indicating the session is beginning
-    #         message: SessionMessage = SessionMessage(f"Session started ({self._subject_name})")
-    #         self._session_messages.append(message)
-    #         self._update_session_messages()
+            #Add a session message indicating the session is beginning
+            message: SessionMessage = SessionMessage(f"Session started ({self._subject_name})")
+            self._session_messages.append(message)
+            self._update_session_messages()
 
-    #         #Set the "session running" flag to True
-    #         self._is_session_running = True
+            #Set the "session running" flag to True
+            self._is_session_running = True
 
-    #         #Set the text and text color on the start/stop button
-    #         self._start_stop_button.setText("Stop")
-    #         self._start_stop_button.setStyleSheet('QPushButton {color: red;}')
+            #Set the text and text color on the start/stop button
+            self._start_stop_button.setText("Stop")
+            self._start_stop_button.setStyleSheet('QPushButton {color: red;}')
 
-    #         #Disable the subject entry and the stage selection box
-    #         self._subject_entry.setEnabled(False)
-    #         self._subject_entry.setStyleSheet("QLineEdit {color: #808080; background-color: #F0F0F0;}")
+            #Disable the subject entry and the stage selection box
+            self._subject_entry.setEnabled(False)
+            self._subject_entry.setStyleSheet("QLineEdit {color: #808080; background-color: #F0F0F0;}")
             
-    #         self._stage_selection_box.setEnabled(False)
-    #         self._stage_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
+            self._stage_selection_box.setEnabled(False)
+            self._stage_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
 
-    #         #Enable the plot selection combo boxes
-    #         self._session_history_plot_selection_box.setEnabled(True)
-    #         self._session_history_plot_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
-    #         self._most_recent_trial_plot_selection_box.setEnabled(True)
-    #         self._most_recent_trial_plot_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
+            # #Enable the plot selection combo boxes
+            # self._session_history_plot_selection_box.setEnabled(True)
+            # self._session_history_plot_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
+            # self._most_recent_trial_plot_selection_box.setEnabled(True)
+            # self._most_recent_trial_plot_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
 
-    #         #Enable the pause and feed buttons
-    #         self._pause_button.setEnabled(True)
-    #         self._feed_button.setEnabled(True)
-    #     else:
-    #         #Disconnect from the signals of the selected stage
-    #         self._selected_stage.signals.new_message.disconnect(self._on_message_received_from_stage)
+            #Enable the pause and feed buttons
+            self._pause_button.setEnabled(True)
+            self._feed_button.setEnabled(True)
+        else:
+            #Disconnect from the signals of the selected stage
+            self._selected_stage.signals.new_message.disconnect(self._on_message_received_from_stage)
 
-    #         #Set the "session running" flag to False
-    #         self._is_session_running = False
+            #Set the "session running" flag to False
+            self._is_session_running = False
 
-    #         #Finalize the stage and close the data file
-    #         self._selected_stage.finalize()
+            #Finalize the stage and close the data file
+            self._selected_stage.finalize()
 
-    #         #Update she session message box
-    #         message: SessionMessage = SessionMessage(f"Session stopped ({self._subject_name})")
-    #         self._session_messages.append(message)
-    #         self._update_session_messages()
+            #Update she session message box
+            message: SessionMessage = SessionMessage(f"Session stopped ({self._subject_name})")
+            self._session_messages.append(message)
+            self._update_session_messages()
 
-    #         #Check if the session was paused at the time that the user
-    #         #pressed the "stop" button
-    #         if (self._is_session_paused):
-    #             #If necessary, reset the "session paused" flag
-    #             self._is_session_paused = False
+            #Check if the session was paused at the time that the user
+            #pressed the "stop" button
+            if (self._is_session_paused):
+                #If necessary, reset the "session paused" flag
+                self._is_session_paused = False
 
-    #             #Also make sure the pause button has the correct text
-    #             self._pause_button.setText("Pause")
+                #Also make sure the pause button has the correct text
+                self._pause_button.setText("Pause")
 
-    #         #Set the text and text color on the start/stop button
-    #         #Also disable the start/stop button (it will become enabled 
-    #         #again after the user enters a new subject name for the next experiment)
-    #         self._start_stop_button.setText("Start")
-    #         self._start_stop_button.setEnabled(False)
-    #         self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
+            #Set the text and text color on the start/stop button
+            #Also disable the start/stop button (it will become enabled 
+            #again after the user enters a new subject name for the next experiment)
+            self._start_stop_button.setText("Start")
+            self._start_stop_button.setEnabled(False)
+            self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
 
-    #         #Disable the pause and feed buttons
-    #         self._pause_button.setEnabled(False)
-    #         self._feed_button.setEnabled(False)
+            #Disable the pause and feed buttons
+            self._pause_button.setEnabled(False)
+            self._feed_button.setEnabled(False)
 
-    #         #Reset the subject name to be empty
-    #         self._subject_entry.setText("")
+            #Reset the subject name to be empty
+            self._subject_entry.setText("")
 
-    #         #Enable the subject entry and the stage selection box
-    #         self._subject_entry.setEnabled(True)
-    #         self._subject_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
+            #Enable the subject entry and the stage selection box
+            self._subject_entry.setEnabled(True)
+            self._subject_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
 
-    #         self._stage_selection_box.setEnabled(True)
-    #         self._stage_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
+            self._stage_selection_box.setEnabled(True)
+            self._stage_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
 
-    #         #Disable the plot selection combo boxes
-    #         self._session_history_plot_selection_box.setEnabled(False)
-    #         self._session_history_plot_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
-    #         self._most_recent_trial_plot_selection_box.setEnabled(False)
-    #         self._most_recent_trial_plot_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
+            #Disable the plot selection combo boxes
+            self._session_history_plot_selection_box.setEnabled(False)
+            self._session_history_plot_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
+            self._most_recent_trial_plot_selection_box.setEnabled(False)
+            self._most_recent_trial_plot_selection_box.setStyleSheet("QComboBox {color: #808080; background-color: #F0F0F0;}")
     
     # def _on_pause_button_clicked (self) -> None:
     #     #Set the "paused" flag
@@ -931,21 +934,6 @@ class MainWindow(QMainWindow):
         text_entry.returnPressed.connect(self._send_callback)
         layout.addWidget(text_entry)
         self._msg_text_list.append(text_entry) #store the text entry for later access.
-
-    def create_button(self, name, layout):
-        """
-        Creates the button
-
-        Args:
-            name (int): The name of the button.
-            layout (QGridLayout): The grid layout to be added.
-        """
-        button = QPushButton(name)
-        button.setFont(self._regular_font)
-        button.setFixedWidth(150)
-        button.clicked.connect(self._send_callback)
-        layout.addWidget(button)
-        layout.addStretch()
 
     def _on_user_command_entered (self) -> None:
         #if (self._is_session_running) and (not (self._is_session_paused)):

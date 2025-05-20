@@ -7,7 +7,7 @@ from .stimjim import StimJim, PulseTrain, PulseStage, StimJimOutputModes, STIMJI
 class ApplicationConfiguration:
 
     #The name of the application
-    appname: str = "H-Reflex Conditioning"
+    appname: str = "PCMS"
 
     #The author/organization of the application
     appauthor: str = "TxBDC"

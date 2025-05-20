@@ -1,9 +1,9 @@
 import sys
 from PySide6 import QtWidgets
 from PySide6.QtWidgets import QMessageBox
-from hreflex_txbdc.view.main_window import MainWindow
-from hreflex_txbdc.model.stimjim import discover_ports
-from hreflex_txbdc.model.application_configuration import ApplicationConfiguration
+from pcms_txbdc.view.main_window import MainWindow
+from pcms_txbdc.model.stimjim import discover_ports
+from pcms_txbdc.model.application_configuration import ApplicationConfiguration
 from serial.tools.list_ports_common import ListPortInfo
 import serial
 
