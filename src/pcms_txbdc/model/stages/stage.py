@@ -23,6 +23,10 @@ class Stage (object):
     STAGE_TYPE_RECRUITMENT_CURVE: int = 2
     STAGE_TYPE_EXPERIMENT: int = 3
 
+    # Amplitude values that were manually set
+    STIM1_AMPLITUDE: int = 0.5      # µA
+    STIM2_AMPLITUDE: int = 0.3      # µA
+
     #endregion
 
     #region Constructor

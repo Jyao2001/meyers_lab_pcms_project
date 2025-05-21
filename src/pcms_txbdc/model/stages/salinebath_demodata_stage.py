@@ -13,26 +13,20 @@ from ..session_message import SessionMessage
 from ..application_configuration import ApplicationConfiguration
 from ..fileio_helpers import FileIO_Helpers
 
+from ..stimjim import StimJim
+
 class SalineBathDemoDataStage (Stage):
 
     #region Constants
 
-    #This defines the duration of an individual bin in miliseconds
-    BIN_DURATION_MILLISECONDS: int = 50
+    #This defines the time between activation of two stimjims
+    STIM_GAP_MILLISECONDS: float = 0.2
 
-    #This defines the number of samples for an individual bin
-    #This is: (sample rate / 1000) * BIN_DURATION_MILLISECONDS
-    BIN_DURATION_SAMPLE_COUNT: int = 250
+    #This defines the wait time after a stimulation in milliseconds
+    STIM_WAIT_MILLISECONDS: int = 100
 
-    #The minimum duration for which we will scan for trial initiation criteria to be met
-    TRIAL_INITIATION_PHASE_MIN_DURATION_MILLISECONDS: int = 2200
-
-    #The maximum duration for which we will scan for trial initiation criteria to be met
-    TRIAL_INITIATION_PHASE_MAX_DURATION_MILLISECONDS: int = 2700
-
-    #The minimum and maximum range for trial initiation
-    TRIAL_INITIATION_MIN_RANGE_MICROVOLTS: float = 15.0
-    TRIAL_INITIATION_MAX_RANGE_MICROVOLTS: float = 300.0
+    #This defines the number of stimulation to be done
+    STIM_INSTANCE_DURATION_SAMPLE_COUNT: int = 10
 
     #endregion
 
@@ -46,34 +40,13 @@ class SalineBathDemoDataStage (Stage):
         self.stage_description = "Saline Bath Demo Data"
         self.stage_type = Stage.STAGE_TYPE_SALINE_DEMO_DATA
 
-        #Declare a variable to hold the monitored signal
-        self._monitored_signal: np.ndarray = np.zeros(1)
-
-        #Declare a variable to hold the bins
-        self._bins: np.ndarray = np.zeros(1)
-
-        #Declare a variable to hold the current monitored signal duration
-        self._monitored_signal_duration_seconds: float = 0.0
-
-        #Declare a variable to hold the number of samples that we will 
-        #store in the monitored signal
-        self._monitored_signal_sample_count: int = 0
-
-        #Declare a variable that helps us determine whether we have streamed enough samples
-        self._current_trial_sample_count: int = 0
-
-        #Declare a variable to hold the trial state
-        self._is_trial_set_up: bool = False
-
-        #Declare a variable to hold the mean of each trial
-        self._trial_means: list[float] = []
-
-        #Instantiate a random-number generator and use the current time as a seed
-        self._rng: Random = Random(datetime.now().timestamp())
-
         #Create a private variable that will be used to store a save-file handle
         self._fid: BinaryIO = None
 
+        #Make sure that the stimulation parameters are set on the StimJims
+        ApplicationConfiguration.set_biphasic_stimulus_pulse_parameters_on_stimjim(0, Stage.STIM1_AMPLITUDE)
+        ApplicationConfiguration.set_biphasic_stimulus_pulse_parameters_on_stimjim(1, Stage.STIM2_AMPLITUDE)
+       
     #endregion
 
     #region Overrides
@@ -81,15 +54,6 @@ class SalineBathDemoDataStage (Stage):
     def initialize (self, subject_id: str) -> tuple[bool, str]:
         #Set the subject id
         self._subject_id: str = subject_id
-
-        #Set the "is trial set up" flag to false
-        self._is_trial_set_up = False
-
-        #Set the current trial sample count to 0
-        self._current_trial_sample_count = 0
-
-        #Clear the list of trial means
-        self._trial_means.clear()
 
         #Get the current datetime
         current_datetime: datetime = datetime.now()

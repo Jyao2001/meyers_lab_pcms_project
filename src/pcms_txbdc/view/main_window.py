@@ -140,85 +140,48 @@ class MainWindow(QMainWindow):
         
         # First row left - Subject entry
         subject_layout = QHBoxLayout()
+        subject_label = QLabel("Subject: ")
+        subject_label.setFont(self._bold_font)
+
+        # Subject text entry
+        self._subject_entry = QLineEdit("")
+        self._subject_entry.setFont(self._regular_font)
+        self._subject_entry.setStyleSheet("QLineEdit {color: #000000; background-color: #FFFFFF;}")
+        self._subject_entry.editingFinished.connect(self._on_subject_name_edited)
+        self._msg_text_list.append(self._subject_entry) #store the text entry for later access.
+
+        #Add elements to layout
         top_grid.addLayout(subject_layout, 0, 0)
-        
-        self.create_text_and_box("Subject: ", subject_layout)
-        #self.create_button("Upload from CSV", subject_layout)
+        subject_layout.addWidget(subject_label)
+        subject_layout.addWidget(self._subject_entry)
+        subject_layout.addStretch()
         
         #First row right - Stage dropdown
         stage_layout = QHBoxLayout()
-        top_grid.addLayout(stage_layout, 0, 1)
         stage_label = QLabel("Stage: ")
         stage_label.setFont(self._bold_font)
-        stage_layout.addWidget(stage_label)
 
         #Stage selection box
         self._stage_selection_box = QComboBox()
         self._stage_selection_box.setFont(self._regular_font)
         self._stage_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
         self._stage_selection_box.currentIndexChanged.connect(self._on_stage_selection_changed)
-        stage_layout.addWidget(self._stage_selection_box)
-        stage_layout.addStretch()
 
         #Populate the stage selection box
         stage_strings: list[str] = []
         for s in self._stages:
             stage_str: str = f"({s.stage_name}) {s.stage_description}"
             stage_strings.append(stage_str)
-        
         self._stage_selection_box.addItems(stage_strings)
+
+        #Add elements to layout
+        top_grid.addLayout(stage_layout, 0, 1)
+        stage_layout.addWidget(stage_label)
+        stage_layout.addWidget(self._stage_selection_box)
+        stage_layout.addStretch()
 
         # Add subject row to grid
         self._layout.addLayout(top_grid, 0, 0)
-
-        #Create another sub-grid on the right side that will display stage information
-        # right_grid = QGridLayout()
-        # right_grid.setColumnStretch(0, 1)
-        # # right_grid.setColumnStretch(1, 1)
-        # # right_grid.setColumnStretch(2, 1)
-        # # right_grid.setColumnStretch(3, 1)
-
-        # # Create labels for the booth name
-        # booth = QLabel("Booth: ")
-        # booth.setFont(self._bold_font)
-        # right_grid.addWidget(booth, 0, 0)
-
-        # self._booth_label = QLabel("NA")
-        # self._booth_label.setFont(self._regular_font)
-        # right_grid.addWidget(self._booth_label, 0, 1)
-
-        # self.add_grid_to_parent(right_grid, 0, 1)
-        # #Create labels for the stage's VNS information
-        # vns = QLabel("VNS: ")
-        # vns.setFont(self._bold_font)
-        # right_grid.addWidget(vns, 0, 2)
-
-        # self._vns_label = QLabel("NA")
-        # self._vns_label.setFont(self._regular_font)
-        # right_grid.addWidget(self._vns_label, 0, 3)
-
-        # #Create labels for the stage's H-Amp information
-        # h_amp = QLabel("H-Amp: ")
-        # h_amp.setFont(self._bold_font)
-        # right_grid.addWidget(h_amp, 1, 0)
-
-        # self._h_amp_label = QLabel("NA")
-        # self._h_amp_label.setFont(self._regular_font)
-        # right_grid.addWidget(self._h_amp_label, 1, 1)
-
-        # #Create labels for the stage's percentile information
-        # percent = QLabel("Percent: ")
-        # percent.setFont(self._bold_font)
-        # right_grid.addWidget(percent, 1, 2)
-
-        # self._percent_label = QLabel("NA")
-        # self._percent_label.setFont(self._regular_font)
-        # right_grid.addWidget(self._percent_label, 1, 3)
-
-        #Add the primary grid to the layout object
-        #self._layout.addLayout(grid, 0, 0)
-        #Add the horizontal layout to the main layout
-        #self._layout.addLayout(top_layout, 0, 0)
 
     def _create_middle_section(self) -> None:
         """
@@ -373,20 +336,20 @@ class MainWindow(QMainWindow):
         self._nerve_stim_down_button.clicked.connect(self._on_nerve_stim_down_button_clicked)
 
         # Create default values of stimulation amplitudes
-        self._brain_stim_value = 5.0    # µA
-        self._nerve_stim_value = 3.0    # µA
+        Stage.STIM1_AMPLITUDE = 5.0    # µA
+        Stage.STIM2_AMPLITUDE = 3.0    # µA
         self._stim_step_size = 0.1      # µA step per click
 
         # Create 2 text boxes: brain/nerve stim amplitude
         self._brain_stim_amplitude_textbox = QLineEdit()
         self._brain_stim_amplitude_textbox.setFixedSize(30, 30)
-        self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
+        self._brain_stim_amplitude_textbox.setText(f"{Stage.STIM1_AMPLITUDE:.1f}")
         self._brain_stim_amplitude_textbox.editingFinished.connect(self._on_stim_amplitude_changed)
         self._brain_stim_button.setAutoDefault(False)
         
         self._nerve_stim_amplitude_textbox = QLineEdit()
         self._nerve_stim_amplitude_textbox.setFixedSize(30, 30)
-        self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
+        self._nerve_stim_amplitude_textbox.setText(f"{Stage.STIM2_AMPLITUDE:.1f}")
         self._nerve_stim_amplitude_textbox.editingFinished.connect(self._on_stim_amplitude_changed)
         self._nerve_stim_button.setAutoDefault(False)
 
@@ -433,9 +396,8 @@ class MainWindow(QMainWindow):
         self._start_stop_button.setFont(self._large_bold_font)
         self._start_stop_button.setFixedWidth(200)
         self._start_stop_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
-        self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
-        self._start_stop_button.setStyleSheet('QPushButton {color: green;}')
         self._start_stop_button.setEnabled(False)
+        self._start_stop_button.setStyleSheet('QPushButton {color: #9D9D9D;}')
         self._start_stop_button.clicked.connect(self._on_start_stop_button_clicked)
 
         self._pause_button = QPushButton("Pause")
@@ -680,12 +642,12 @@ class MainWindow(QMainWindow):
         # Determine if it's brain or nerve based on which button was clicked
         if sender == self._brain_stim_button:
             label = "Brain"
-            amplitude = self._brain_stim_value
-            stim_number = 0
+            amplitude = Stage.STIM1_AMPLITUDE
+            stim_number = 1
         elif sender == self._nerve_stim_button:
             label = "Nerve"
-            amplitude = self._nerve_stim_value
-            stim_number = 1
+            amplitude = Stage.STIM2_AMPLITUDE
+            stim_number = 2
         else:
             # Unknown sender
             return
@@ -714,23 +676,23 @@ class MainWindow(QMainWindow):
 
     def _on_brain_stim_up_button_clicked (self) -> None:
         # Increase value by 0.1
-        self._brain_stim_value += self._stim_step_size
-        self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
+        Stage.STIM1_AMPLITUDE += self._stim_step_size
+        self._brain_stim_amplitude_textbox.setText(f"{Stage.STIM1_AMPLITUDE:.1f}")
 
     def _on_brain_stim_down_button_clicked (self) -> None:
         # Decrease value by 0.1
-        self._brain_stim_value = max(0.0, self._brain_stim_value - self._stim_step_size)
-        self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
+        Stage.STIM1_AMPLITUDE = max(0.0, Stage.STIM1_AMPLITUDE - self._stim_step_size)
+        self._brain_stim_amplitude_textbox.setText(f"{Stage.STIM1_AMPLITUDE:.1f}")
 
     def _on_nerve_stim_up_button_clicked (self) -> None:
         # Increase value by 0.1
-        self._nerve_stim_value += self._stim_step_size
-        self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
+        Stage.STIM2_AMPLITUDE += self._stim_step_size
+        self._nerve_stim_amplitude_textbox.setText(f"{Stage.STIM2_AMPLITUDE:.1f}")
 
     def _on_nerve_stim_down_button_clicked (self) -> None:
         # Increase value by 0.1
-        self._nerve_stim_value = max(0.0, self._nerve_stim_value - self._stim_step_size)
-        self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
+        Stage.STIM2_AMPLITUDE = max(0.0, Stage.STIM2_AMPLITUDE - self._stim_step_size)
+        self._nerve_stim_amplitude_textbox.setText(f"{Stage.STIM2_AMPLITUDE:.1f}")
 
     def _on_stim_amplitude_changed(self) -> None:
         # Error handler for when non-numeric is imputted in textbox.
@@ -738,18 +700,18 @@ class MainWindow(QMainWindow):
         nerve_text = self._nerve_stim_amplitude_textbox.text()
 
         try:
-            self._brain_stim_value = float(brain_text)
+            Stage.STIM1_AMPLITUDE = float(brain_text)
         except ValueError:
-            self._brain_stim_value = 5.0
-            self._brain_stim_amplitude_textbox.setText(f"{self._brain_stim_value:.1f}")
+            Stage.STIM1_AMPLITUDE = 5.0
+            self._brain_stim_amplitude_textbox.setText(f"{Stage.STIM1_AMPLITUDE:.1f}")
             self._session_messages.append(SessionMessage("Invalid brain stim input! Reset to 5.0 mA."))
             self._update_session_messages() 
 
         try:
-            self._nerve_stim_value = float(nerve_text)
+            Stage.STIM2_AMPLITUDE = float(nerve_text)
         except ValueError:
-            self._nerve_stim_value = 3.0
-            self._nerve_stim_amplitude_textbox.setText(f"{self._nerve_stim_value:.1f}")
+            Stage.STIM2_AMPLITUDE = 3.0
+            self._nerve_stim_amplitude_textbox.setText(f"{Stage.STIM2_AMPLITUDE:.1f}")
             self._session_messages.append(SessionMessage("Invalid nerve stim input! Reset to 3.0 mA."))
             self._update_session_messages()
 
@@ -757,14 +719,14 @@ class MainWindow(QMainWindow):
         stim_info = [
             {
                 "label": "brain",
-                "value": self._brain_stim_value,
+                "value": Stage.STIM1_AMPLITUDE,
                 "default": 5.0,
                 "textbox": self._brain_stim_amplitude_textbox,
                 "set_func": lambda v: setattr(self, "_brain_stim_value", v)
             },
             {
                 "label": "nerve",
-                "value": self._nerve_stim_value,
+                "value": Stage.STIM2_AMPLITUDE,
                 "default": 3.0,
                 "textbox": self._nerve_stim_amplitude_textbox,
                 "set_func": lambda v: setattr(self, "_nerve_stim_value", v)
@@ -834,8 +796,8 @@ class MainWindow(QMainWindow):
             # self._most_recent_trial_plot_selection_box.setStyleSheet("QComboBox {color: #000000; background-color: #FFFFFF;}")
 
             #Enable the pause and feed buttons
-            self._pause_button.setEnabled(True)
-            self._feed_button.setEnabled(True)
+            # self._pause_button.setEnabled(True)
+            # self._feed_button.setEnabled(True)
         else:
             #Disconnect from the signals of the selected stage
             self._selected_stage.signals.new_message.disconnect(self._on_message_received_from_stage)
