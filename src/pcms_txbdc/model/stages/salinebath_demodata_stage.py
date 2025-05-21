@@ -55,6 +55,9 @@ class SalineBathDemoDataStage (Stage):
         #Set the subject id
         self._subject_id: str = subject_id
 
+        #Set the stimulation count to 0
+        self._stimulation_count = 0
+
         #Get the current datetime
         current_datetime: datetime = datetime.now()
 
@@ -94,11 +97,6 @@ class SalineBathDemoDataStage (Stage):
         Processes the most recent incoming data and takes any actions
         that are necessary based on the incoming data.
         '''
-
-        #Check to see if we need to set up a new trial
-        if (not self._is_trial_set_up):
-            #Set up a new trial
-            self._setup_new_trial()
 
         #Now let's proceed
         if (self._is_trial_set_up):
